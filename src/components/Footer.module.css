@@ -1,0 +1,187 @@
+.footer {
+  background: var(--theme-footer-bg);
+  border-top: 1px solid var(--theme-footer-border);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.inner {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-8);
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 220px;
+}
+
+.logo {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.logo:hover {
+  opacity: 0.95;
+}
+
+.logoBox {
+  width: 36px;
+  height: 36px;
+  background: var(--theme-dark-accent); /* Default brand red */
+  border-radius: 9px; /* Smooth rounded corners */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(165, 18, 18, 0.15); /* Subtle red brand glow */
+  transition: transform var(--duration-base) var(--ease-spring), box-shadow var(--duration-base) var(--ease-out);
+}
+
+.logo:hover .logoBox {
+  transform: scale(1.06) rotate(3deg);
+  box-shadow: 0 6px 14px rgba(165, 18, 18, 0.25);
+}
+
+.logoBox i {
+  color: var(--white);
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+.logoText {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans); /* Use sans-serif font (Inter) as requested */
+  font-size: 1.35rem;
+  font-weight: 800; /* Bold, geometric like the screenshot */
+  letter-spacing: -0.03em;
+}
+
+.logoBio {
+  color: var(--theme-footer-logo);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.logoEdu {
+  color: var(--theme-dark-accent); /* Default brand red */
+  font-style: normal;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.05);
+  }
+}
+
+.tagline {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--theme-footer-text);
+  line-height: 1.6;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.social { display: flex; gap: var(--space-2); }
+.socialLink {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--theme-footer-social-border);
+  color: var(--theme-footer-social-text);
+  text-decoration: none;
+  transition:
+    background var(--duration-base),
+    color var(--duration-base),
+    border-color var(--duration-slow) var(--ease-out);
+}
+.socialLink:hover {
+  background: var(--theme-footer-social-hover-bg);
+  color: var(--theme-footer-social-hover-text);
+}
+.socialLink .ti { font-size: 15px; }
+
+/* Links */
+.links {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.groupTitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--theme-footer-text-muted);
+  margin-bottom: var(--space-4);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.links ul { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.link {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--theme-footer-link);
+  text-decoration: none;
+  transition: color var(--duration-base);
+}
+.link:hover { color: var(--theme-footer-link-hover); }
+
+/* Bottom bar — design system reference style */
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-6);
+  border-top: 1px solid var(--theme-footer-border);
+  transition: border-color var(--duration-slow) var(--ease-out);
+}
+
+.copyright {
+  font-size: 11px;
+  color: var(--theme-footer-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.certBadges { display: flex; gap: var(--space-3); }
+.certBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 10px;
+  color: var(--theme-footer-text);
+  border: 1px solid var(--theme-footer-border);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  transition:
+    color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+.certBadge .ti { font-size: 11px; }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 768px) {
+  .inner { flex-direction: column; gap: var(--space-8); }
+  .links { gap: var(--space-10); }
+}

@@ -1,0 +1,92 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.pageSubtitle {
+  margin-top: var(--space-2);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-16) var(--space-6);
+  background: var(--theme-bg-card);
+  border: 1px dashed var(--theme-border);
+  border-radius: var(--radius-xl);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.emptyIcon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--theme-icon-bg);
+  border: 1px solid var(--theme-icon-border);
+  color: var(--theme-icon-color);
+}
+
+.emptyIcon .ti {
+  font-size: 34px;
+}
+
+.emptyTitle {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.emptyText {
+  max-width: 420px;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--theme-bg-card-alt);
+  border: 1px solid var(--theme-border);
+  color: var(--theme-dark-accent);
+}

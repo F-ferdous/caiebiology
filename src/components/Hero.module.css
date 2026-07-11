@@ -1,0 +1,280 @@
+.hero {
+  position: relative;
+  min-height: 100svh;
+  background: var(--theme-dark-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: 84px;
+  transition: background-color var(--duration-slow) var(--ease-out);
+}
+
+/* Background grid */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--theme-dark-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--theme-dark-grid-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 90% 80% at 30% 40%, black 20%, transparent 100%);
+  pointer-events: none;
+  transition: background-image var(--duration-slow) var(--ease-out);
+}
+
+/* Ambient glow */
+.glow {
+  position: absolute;
+  top: -5%;
+  left: 20%;
+  width: 600px;
+  height: 500px;
+  background: radial-gradient(ellipse, var(--theme-dark-glow) 0%, transparent 65%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+/* Decorative rings */
+.ring1 {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  border: 1.5px solid var(--theme-dark-ring);
+  pointer-events: none;
+  transition: border-color var(--duration-slow) var(--ease-out);
+}
+
+.ring2 {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid var(--theme-dark-ring-subtle);
+  pointer-events: none;
+  transition: border-color var(--duration-slow) var(--ease-out);
+}
+
+/* Inner layout */
+.inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-12);
+  align-items: center;
+  padding-block: var(--space-16);
+}
+
+/* Left column */
+.left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  background: var(--theme-dark-surface);
+  border: 1px solid var(--theme-dark-border);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--theme-dark-accent);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out),
+    color var(--duration-slow) var(--ease-out);
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--theme-dark-accent);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,64,64,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(217,64,64,0); }
+}
+
+/* Headline */
+.headline {
+  font-family: var(--font-serif);
+  font-size: clamp(2.8rem, 6vw, 5.2rem);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  color: var(--theme-dark-text);
+  margin-bottom: var(--space-5);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity var(--duration-page) var(--ease-out),
+    transform var(--duration-page) var(--ease-out);
+}
+
+.wordVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.wordSmall {
+  font-size: 0.6em;
+  font-weight: 500;
+  color: var(--theme-dark-text-muted);
+  letter-spacing: -0.02em;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.wordAccent {
+  color: var(--theme-dark-accent);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+/* Sub */
+.sub {
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--theme-dark-text-secondary);
+  max-width: 420px;
+  margin-bottom: var(--space-8);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+/* CTA row */
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ctaGhost {
+  background: transparent;
+  color: var(--theme-dark-text-muted);
+  border: 1.5px solid var(--theme-dark-border);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.ctaGhost:hover {
+  background: var(--theme-dark-surface-hover);
+  color: var(--theme-dark-text);
+  border-color: var(--theme-dark-text-muted);
+}
+
+/* Pills */
+.pills {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 5px 14px;
+  border: 1px solid var(--theme-dark-border);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--theme-dark-text-muted);
+  letter-spacing: 0.04em;
+  transition:
+    border-color var(--duration-slow) var(--ease-out),
+    color var(--duration-slow) var(--ease-out);
+}
+
+/* Right: SVG container */
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
+
+/* Scroll cue */
+.scrollCue {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.scrollLine {
+  display: block;
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, var(--theme-dark-text-muted), transparent);
+  animation: scrollFade 2s ease-in-out infinite;
+}
+
+@keyframes scrollFade {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 1024px) {
+  .inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .left {
+    align-items: center;
+  }
+
+  .right {
+    max-width: 340px;
+    margin: 0 auto;
+  }
+
+  .sub {
+    max-width: 100%;
+  }
+
+  .ring1, .ring2 {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .headline {
+    font-size: 3rem;
+  }
+  .ctaRow {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .ctaRow .btn {
+    justify-content: center;
+  }
+}

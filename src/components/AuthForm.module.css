@@ -1,0 +1,437 @@
+/* ============================================================
+   Auth (Login / Sign Up) — BioEdu design system
+   ============================================================ */
+.authSection {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: calc(84px + var(--space-10)); /* clear the fixed navbar */
+  padding-bottom: var(--space-16);
+  background: var(--theme-bg-primary);
+  transition: background-color var(--duration-slow) var(--ease-out);
+}
+
+.wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  width: 100%;
+  max-width: 880px;
+  background: var(--theme-bg-card);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--theme-shadow-md);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+/* ---- Brand side panel (dark treatment, like Class/AI cards) ---- */
+.panel {
+  position: relative;
+  background: var(--gray-900);
+  border-right: 1px solid rgba(196, 31, 31, 0.25);
+  padding: var(--space-12) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  overflow: hidden;
+}
+
+.panelGlow {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 260px;
+  height: 260px;
+  border-radius: var(--radius-circle);
+  background: radial-gradient(circle, rgba(196, 31, 31, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.panelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(196, 31, 31, 0.2);
+  border: 1px solid rgba(196, 31, 31, 0.3);
+  color: var(--red-200);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panelTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--white);
+}
+
+.panelTitle em {
+  color: var(--red-300);
+  font-style: italic;
+}
+
+.panelList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;
+}
+
+.panelList li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.panelList li .ti {
+  color: var(--red-300);
+  font-size: 16px;
+}
+
+/* ---- Form side ---- */
+.formSide {
+  padding: var(--space-12) var(--space-10);
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.subtitle {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-8);
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--theme-text-secondary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.forgot {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-dark-accent);
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.forgot:hover {
+  color: var(--red-400);
+  text-decoration: underline;
+}
+
+.input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 11px 12px;
+  border: 1.5px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: var(--theme-bg-card-alt);
+  color: var(--theme-text-primary);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background-color var(--duration-slow) var(--ease-out),
+    color var(--duration-slow) var(--ease-out);
+}
+
+.input::placeholder {
+  color: var(--theme-text-tertiary);
+}
+
+.input:hover {
+  border-color: var(--gray-300);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--theme-text-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: 42px;
+}
+
+.eyeBtn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--theme-text-tertiary);
+  transition: color var(--duration-base), background var(--duration-base);
+}
+
+.eyeBtn:hover {
+  color: var(--theme-text-primary);
+  background: var(--theme-nav-hover-bg);
+}
+
+.eyeBtn .ti {
+  font-size: 16px;
+}
+
+/* ---- Role indicator (signup — students only) ---- */
+.roleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--theme-border);
+  background: var(--theme-bg-card-alt);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--theme-text-muted);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+}
+
+.roleBtn:hover {
+  border-color: var(--gray-300);
+  color: var(--theme-text-primary);
+}
+
+.roleBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.roleActive {
+  border-color: var(--red-500);
+  background: var(--theme-icon-bg);
+  color: var(--theme-dark-accent);
+}
+
+.roleBtn .ti {
+  font-size: 16px;
+}
+
+.roleStatic,
+.roleStatic:hover {
+  cursor: default;
+  font-weight: 600;
+  border-color: var(--red-500);
+  color: var(--theme-dark-accent);
+}
+
+.roleNote {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--theme-text-tertiary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+/* ---- Checkbox rows ---- */
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  line-height: 1.5;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.checkbox {
+  accent-color: var(--red-500);
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.inlineLink {
+  color: var(--theme-dark-accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+/* ---- Alerts ---- */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.error .ti {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.success {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.success .ti {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.success strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.success p {
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* ---- Submit & switch ---- */
+.submitBtn {
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+/* Match the navbar CTA treatment in dark mode — white button, red on hover */
+:global([data-theme="dark"]) .submitBtn {
+  background: var(--white);
+  color: var(--gray-900);
+  border-color: var(--white);
+}
+
+:global([data-theme="dark"]) .submitBtn:hover {
+  background: var(--red-500);
+  color: var(--white);
+  border-color: var(--red-500);
+}
+
+.switchLine {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--theme-border-subtle);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.switchLink {
+  color: var(--theme-dark-accent);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.switchLink:hover {
+  color: var(--red-400);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 960px) {
+  .card {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+  }
+
+  .panel {
+    display: none;
+  }
+
+  .formSide {
+    padding: var(--space-10) var(--space-8);
+  }
+}
+
+@media (max-width: 640px) {
+  .authSection {
+    padding-top: calc(84px + var(--space-6));
+    padding-bottom: var(--space-10);
+  }
+
+  .formSide {
+    padding: var(--space-8) var(--space-5);
+  }
+}

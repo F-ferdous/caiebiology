@@ -1,0 +1,764 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0A0A0A;
+  --ink-2:#1A1A1A;
+  --ink-3:#2D2D2D;
+  --surface:#FAFAFA;
+  --surface-2:#F4F4F4;
+  --surface-3:#EEEEEE;
+  --border:#E0E0E0;
+  --red-900:#1A0202;
+  --red-800:#3B0505;
+  --red-700:#5C0808;
+  --red-600:#7E0B0B;
+  --red-500:#A51212;
+  --red-400:#C41F1F;
+  --red-300:#D94040;
+  --red-200:#E87272;
+  --red-100:#F4B3B3;
+  --red-50:#FBE8E8;
+  --gray-900:#0A0A0A;
+  --gray-800:#1A1A1A;
+  --gray-700:#2D2D2D;
+  --gray-600:#444444;
+  --gray-500:#5C5C5C;
+  --gray-400:#767676;
+  --gray-300:#999999;
+  --gray-200:#C4C4C4;
+  --gray-100:#E0E0E0;
+  --gray-50:#F4F4F4;
+  --white:#FFFFFF;
+  --off-white:#FAF9F7;
+  --cream:#F5F2EE;
+  --serif:'DM Serif Display',serif;
+  --sans:'DM Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+body{font-family:var(--sans);background:var(--surface);color:var(--ink);font-size:14px;line-height:1.6}
+
+.ds-wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+
+.ds-hero{background:var(--gray-900);color:var(--white);padding:48px 40px 36px;border-radius:16px;margin-bottom:32px;position:relative;overflow:hidden}
+.ds-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;border-radius:50%;border:2px solid rgba(196,31,31,0.25);pointer-events:none}
+.ds-hero::after{content:'';position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;border:1px solid rgba(196,31,31,0.15);pointer-events:none}
+.ds-hero-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--red-300);font-family:var(--sans);font-weight:500;margin-bottom:14px}
+.ds-hero-title{font-family:var(--serif);font-size:42px;line-height:1.1;color:var(--white);margin-bottom:12px}
+.ds-hero-title span{color:var(--red-300);font-style:italic}
+.ds-hero-sub{font-size:13px;color:rgba(255,255,255,0.5);max-width:420px;line-height:1.6;font-weight:300}
+.ds-hero-pills{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+.ds-hero-pill{padding:5px 14px;border:1px solid rgba(255,255,255,0.15);border-radius:20px;font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.04em}
+
+.ds-section{margin-bottom:36px}
+.ds-section-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-400);font-weight:600;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ds-section-label .num{color:var(--red-400);font-size:11px;font-weight:600}
+
+/* COLOR PALETTE */
+.palette-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.palette-group{border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.palette-group-label{padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:0.06em;background:var(--surface-2);border-bottom:1px solid var(--border);color:var(--gray-600)}
+.swatch-row{display:flex;height:36px}
+.swatch{flex:1;position:relative;cursor:default}
+.swatch:hover .swatch-tip{opacity:1}
+.swatch-tip{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;font-size:9px;padding:2px 5px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;font-family:var(--mono);transition:opacity .15s}
+
+/* TYPOGRAPHY */
+.type-showcase{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.type-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px}
+.type-card-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:12px;font-weight:600}
+.type-display{font-family:var(--serif);font-size:32px;line-height:1.15;color:var(--gray-900)}
+.type-display em{color:var(--red-500);font-style:italic}
+.type-body{font-family:var(--sans);font-size:14px;line-height:1.7;color:var(--gray-600);font-weight:300}
+.type-ui{font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--gray-700);font-weight:500}
+.type-mono{font-family:var(--mono);font-size:12px;color:var(--red-600);background:var(--red-50);padding:10px 12px;border-radius:6px;border:1px solid var(--red-100)}
+.type-scale{display:flex;flex-direction:column;gap:6px}
+.ts-row{display:flex;align-items:baseline;gap:12px}
+.ts-tag{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);font-weight:600;min-width:60px}
+.ts-h1{font-family:var(--serif);font-size:28px;color:var(--gray-900);line-height:1}
+.ts-h2{font-family:var(--serif);font-size:22px;color:var(--gray-800);line-height:1}
+.ts-h3{font-family:var(--sans);font-size:18px;color:var(--gray-700);font-weight:500;line-height:1}
+.ts-body{font-family:var(--sans);font-size:14px;color:var(--gray-600);font-weight:300;line-height:1}
+.ts-caption{font-family:var(--sans);font-size:12px;color:var(--gray-400);font-weight:400;line-height:1}
+.ts-label{font-family:var(--sans);font-size:11px;color:var(--gray-500);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;line-height:1}
+
+/* SPACING */
+.spacing-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.sp-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sp-box{background:var(--red-100);border:1px solid var(--red-200);border-radius:4px}
+.sp-tag{font-size:10px;color:var(--gray-500);font-family:var(--mono)}
+
+/* BORDER RADIUS */
+.radius-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.rad-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.rad-box{width:60px;height:60px;background:var(--gray-200);border:1px solid var(--gray-300)}
+.rad-tag{font-size:10px;color:var(--gray-500);font-family:var(--mono)}
+
+/* COMPONENTS */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.comp-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px}
+.comp-card-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:14px;font-weight:600}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .18s;letter-spacing:0.01em}
+.btn-primary{background:var(--gray-900);color:var(--white);padding:10px 20px;border-radius:8px}
+.btn-primary:hover{background:var(--red-600)}
+.btn-secondary{background:transparent;color:var(--gray-900);padding:9px 18px;border-radius:8px;border:1.5px solid var(--gray-900)}
+.btn-secondary:hover{background:var(--gray-900);color:var(--white)}
+.btn-danger{background:var(--red-600);color:var(--white);padding:10px 20px;border-radius:8px}
+.btn-ghost{background:transparent;color:var(--red-600);padding:9px 18px;border-radius:8px;border:1.5px solid var(--red-100)}
+.btn-ghost:hover{background:var(--red-50)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:6px}
+.btn-icon{padding:9px;border-radius:8px;background:var(--surface-2);color:var(--gray-600);border:1px solid var(--border)}
+
+/* BADGES */
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.04em;display:inline-flex;align-items:center;gap:4px}
+.badge-default{background:var(--gray-100);color:var(--gray-600)}
+.badge-red{background:var(--red-50);color:var(--red-700);border:1px solid var(--red-100)}
+.badge-black{background:var(--gray-900);color:var(--white)}
+.badge-ai{background:linear-gradient(135deg,var(--red-800),var(--gray-900));color:var(--white)}
+.badge-success{background:#E8F5E9;color:#2E7D32;border:1px solid #C8E6C9}
+.badge-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+
+/* FORM ELEMENTS */
+.form-stack{display:flex;flex-direction:column;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;color:var(--gray-600);letter-spacing:0.05em;text-transform:uppercase}
+.form-input{font-family:var(--sans);font-size:13px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);color:var(--gray-900);transition:border-color .15s}
+.form-input:focus{outline:none;border-color:var(--gray-900)}
+.form-hint{font-size:11px;color:var(--gray-400)}
+
+/* CARDS */
+.resource-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;transition:box-shadow .2s}
+.resource-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.07)}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.rc-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rc-icon-bio{background:var(--red-50);color:var(--red-600)}
+.rc-icon-ai{background:var(--gray-900);color:var(--white)}
+.rc-title{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:4px}
+.rc-meta{font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:6px}
+.rc-dot{width:3px;height:3px;border-radius:50%;background:var(--gray-300);display:inline-block}
+.rc-actions{display:flex;gap:6px;margin-top:12px}
+
+/* NAVIGATION */
+.nav-demo{background:var(--gray-900);border-radius:12px;padding:0 20px;display:flex;align-items:center;gap:0;height:54px}
+.nav-brand{font-family:var(--serif);font-size:17px;color:var(--white);margin-right:32px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-brand span{color:var(--red-300);font-style:italic}
+.nav-links{display:flex;align-items:center;gap:2px;flex:1}
+.nav-link{font-size:12px;padding:7px 12px;border-radius:7px;color:rgba(255,255,255,0.5);font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.nav-link:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.06)}
+.nav-link.active{color:var(--white);background:rgba(255,255,255,0.1)}
+.nav-end{display:flex;align-items:center;gap:8px}
+.nav-avatar{width:28px;height:28px;border-radius:50%;background:var(--red-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--white)}
+
+/* AI FEATURE CARD */
+.ai-card{background:var(--gray-900);border-radius:14px;padding:20px;color:var(--white);border:1px solid rgba(196,31,31,0.25)}
+.ai-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(196,31,31,0.2);border:1px solid rgba(196,31,31,0.3);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:600;color:var(--red-200);letter-spacing:0.08em;margin-bottom:12px}
+.ai-title{font-family:var(--serif);font-size:20px;color:var(--white);margin-bottom:6px;line-height:1.2}
+.ai-sub{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.6;font-weight:300}
+.ai-prompt{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;margin-top:14px;font-size:12px;color:rgba(255,255,255,0.6);font-family:var(--mono)}
+
+/* ALERT / TOAST */
+.alert-stack{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;font-size:12px}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert-content{}
+.alert-title{font-weight:600;margin-bottom:2px;font-size:12px}
+.alert-body{color:var(--gray-500);font-size:11px}
+.alert-info{background:var(--surface-2);border:1px solid var(--border)}
+.alert-info .alert-icon,.alert-info .alert-title{color:var(--gray-700)}
+.alert-success{background:#F1F8F1;border:1px solid #C8E6C9}
+.alert-success .alert-icon,.alert-success .alert-title{color:#2E7D32}
+.alert-warn{background:#FFFBF0;border:1px solid #FDE68A}
+.alert-warn .alert-icon,.alert-warn .alert-title{color:#92400E}
+.alert-danger{background:var(--red-50);border:1px solid var(--red-100)}
+.alert-danger .alert-icon,.alert-danger .alert-title{color:var(--red-700)}
+
+/* TABLES */
+.table-demo{width:100%;border-collapse:collapse;font-size:12px}
+.table-demo th{text-align:left;padding:9px 12px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-400);border-bottom:1.5px solid var(--border)}
+.table-demo td{padding:10px 12px;border-bottom:1px solid var(--surface-3);color:var(--gray-700);vertical-align:middle}
+.table-demo tr:last-child td{border-bottom:none}
+.table-demo tr:hover td{background:var(--surface-2)}
+.td-name{font-weight:500;color:var(--gray-900)}
+.td-avatar{width:26px;height:26px;border-radius:50%;background:var(--gray-200);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-600)}
+
+/* SHADOW SCALE */
+.shadow-row{display:flex;gap:16px;flex-wrap:wrap}
+.sh-card{background:var(--white);border-radius:12px;width:80px;height:60px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gray-400);font-family:var(--mono);flex-direction:column;gap:3px}
+.sh-sm{box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.sh-md{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.sh-lg{box-shadow:0 8px 32px rgba(0,0,0,0.1)}
+.sh-xl{box-shadow:0 16px 48px rgba(0,0,0,0.12)}
+
+/* ICON SYSTEM */
+.icon-grid{display:flex;gap:8px;flex-wrap:wrap}
+.icon-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px;background:var(--surface-2);border-radius:10px;min-width:56px}
+.icon-item i{font-size:20px;color:var(--gray-700)}
+.icon-item.red i{color:var(--red-500)}
+.icon-item.black i{color:var(--gray-900)}
+.icon-name{font-size:9px;color:var(--gray-400);text-align:center;font-family:var(--mono)}
+
+/* PAGE LAYOUTS */
+.layout-demo{background:var(--surface-2);border-radius:10px;overflow:hidden;font-size:10px}
+.layout-nav{background:var(--gray-900);height:32px;display:flex;align-items:center;padding:0 12px;gap:8px}
+.layout-dot{width:7px;height:7px;border-radius:50%}
+.layout-body{display:flex;height:100px}
+.layout-sidebar{width:70px;background:var(--surface-3);border-right:1px solid var(--border);padding:8px 6px;display:flex;flex-direction:column;gap:4px}
+.layout-sidebar-item{height:14px;background:var(--border);border-radius:3px}
+.layout-sidebar-item.active{background:var(--red-300)}
+.layout-main{flex:1;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-content:start}
+.layout-block{height:28px;background:var(--white);border-radius:4px;border:1px solid var(--border)}
+.layout-label{font-size:9px;color:var(--gray-400);padding:6px 10px;text-align:center;letter-spacing:0.05em;font-weight:600}
+
+/* MOTION TOKENS */
+.motion-row{display:flex;gap:12px;flex-wrap:wrap}
+.motion-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:130px;text-align:center}
+.motion-label{font-size:10px;color:var(--gray-500);margin-bottom:4px;font-family:var(--mono)}
+.motion-value{font-size:12px;font-weight:600;color:var(--gray-900)}
+.motion-desc{font-size:10px;color:var(--gray-400);margin-top:3px}
+
+/* DIVIDERS */
+.divider{height:1px;background:var(--border);margin:4px 0 20px}
+
+/* FOOTER */
+.ds-footer{margin-top:40px;padding:24px;background:var(--gray-900);border-radius:12px;display:flex;align-items:center;justify-content:space-between}
+.ds-footer-brand{font-family:var(--serif);font-size:18px;color:var(--white)}
+.ds-footer-brand span{color:var(--red-300);font-style:italic}
+.ds-footer-meta{font-size:11px;color:rgba(255,255,255,0.35);font-weight:300}
+</style>
+</head>
+<body>
+<div class="ds-wrap">
+
+<!-- HERO -->
+<div class="ds-hero">
+  <div class="ds-hero-eyebrow">Design System v1.0</div>
+  <div class="ds-hero-title">Bio<span>Edu</span> Platform</div>
+  <div class="ds-hero-sub">A complete visual language for a modern biology education platform — built for teachers, students, and AI-powered learning experiences.</div>
+  <div class="ds-hero-pills">
+    <span class="ds-hero-pill">Biology · EdTech</span>
+    <span class="ds-hero-pill">Admin + Student Roles</span>
+    <span class="ds-hero-pill">AI-Powered Features</span>
+    <span class="ds-hero-pill">Responsive</span>
+    <span class="ds-hero-pill">Accessible</span>
+  </div>
+</div>
+
+<!-- 01 COLOR PALETTE -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">01</span> Color Palette</div>
+
+  <div class="palette-grid">
+    <!-- PRIMARY: BLACK -->
+    <div class="palette-group">
+      <div class="palette-group-label">Black — Primary</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#0A0A0A"><span class="swatch-tip">#0A0A0A</span></div>
+        <div class="swatch" style="background:#1A1A1A"><span class="swatch-tip">#1A1A1A</span></div>
+        <div class="swatch" style="background:#2D2D2D"><span class="swatch-tip">#2D2D2D</span></div>
+        <div class="swatch" style="background:#444444"><span class="swatch-tip">#444444</span></div>
+        <div class="swatch" style="background:#5C5C5C"><span class="swatch-tip">#5C5C5C</span></div>
+        <div class="swatch" style="background:#767676"><span class="swatch-tip">#767676</span></div>
+        <div class="swatch" style="background:#999999"><span class="swatch-tip">#999999</span></div>
+      </div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#C4C4C4"><span class="swatch-tip">#C4C4C4</span></div>
+        <div class="swatch" style="background:#E0E0E0"><span class="swatch-tip">#E0E0E0</span></div>
+        <div class="swatch" style="background:#F4F4F4"><span class="swatch-tip">#F4F4F4</span></div>
+        <div class="swatch" style="background:#F9F9F9"><span class="swatch-tip">#F9F9F9</span></div>
+        <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #eee"><span class="swatch-tip">#FFFFFF</span></div>
+        <div class="swatch" style="background:#FAF9F7;border-bottom:1px solid #eee"><span class="swatch-tip">Off-white</span></div>
+        <div class="swatch" style="background:#F5F2EE;border-bottom:1px solid #eee"><span class="swatch-tip">Cream</span></div>
+      </div>
+    </div>
+
+    <!-- ACCENT: RED -->
+    <div class="palette-group">
+      <div class="palette-group-label">Red — Accent</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#1A0202"><span class="swatch-tip">900</span></div>
+        <div class="swatch" style="background:#3B0505"><span class="swatch-tip">800</span></div>
+        <div class="swatch" style="background:#5C0808"><span class="swatch-tip">700</span></div>
+        <div class="swatch" style="background:#7E0B0B"><span class="swatch-tip">600</span></div>
+        <div class="swatch" style="background:#A51212"><span class="swatch-tip">500</span></div>
+        <div class="swatch" style="background:#C41F1F"><span class="swatch-tip">400</span></div>
+        <div class="swatch" style="background:#D94040"><span class="swatch-tip">300</span></div>
+      </div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#E87272"><span class="swatch-tip">200</span></div>
+        <div class="swatch" style="background:#F4B3B3"><span class="swatch-tip">100</span></div>
+        <div class="swatch" style="background:#FBE8E8"><span class="swatch-tip">50</span></div>
+        <div class="swatch" style="background:#FDF3F3"><span class="swatch-tip">30</span></div>
+        <div class="swatch" style="background:#FEFAFA;border-bottom:1px solid #eee"><span class="swatch-tip">10</span></div>
+        <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #eee"></div>
+        <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #eee"></div>
+      </div>
+    </div>
+
+    <!-- SEMANTIC -->
+    <div class="palette-group">
+      <div class="palette-group-label">Semantic / Status</div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#1B5E20" title="Success Dark"><span class="swatch-tip">Success 900</span></div>
+        <div class="swatch" style="background:#2E7D32"><span class="swatch-tip">Success 700</span></div>
+        <div class="swatch" style="background:#43A047"><span class="swatch-tip">Success 500</span></div>
+        <div class="swatch" style="background:#A5D6A7"><span class="swatch-tip">Success 200</span></div>
+        <div class="swatch" style="background:#E8F5E9"><span class="swatch-tip">Success 50</span></div>
+        <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #eee"></div>
+        <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #eee"></div>
+      </div>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#E65100"><span class="swatch-tip">Warn 700</span></div>
+        <div class="swatch" style="background:#F57C00"><span class="swatch-tip">Warn 500</span></div>
+        <div class="swatch" style="background:#FFA726"><span class="swatch-tip">Warn 300</span></div>
+        <div class="swatch" style="background:#FFF8E1"><span class="swatch-tip">Warn 50</span></div>
+        <div class="swatch" style="background:#1565C0"><span class="swatch-tip">Info 700</span></div>
+        <div class="swatch" style="background:#42A5F5"><span class="swatch-tip">Info 300</span></div>
+        <div class="swatch" style="background:#E3F2FD"><span class="swatch-tip">Info 50</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color usage guide -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
+    <div style="background:var(--gray-900);border-radius:10px;padding:14px">
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Black 900</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:300">Nav, hero backgrounds, primary CTAs, headings</div>
+    </div>
+    <div style="background:var(--red-500);border-radius:10px;padding:14px">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Red 500</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:300">Accent actions, highlights, AI features</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div style="font-size:10px;color:var(--gray-400);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">White</div>
+      <div style="font-size:12px;color:var(--gray-600);font-weight:300">Card surfaces, content areas, form fields</div>
+    </div>
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div style="font-size:10px;color:var(--gray-400);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Cream</div>
+      <div style="font-size:12px;color:var(--gray-600);font-weight:300">Page backgrounds, soothing base layer</div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 TYPOGRAPHY -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">02</span> Typography</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">DM Serif Display — Headings</div>
+      <div style="font-family:var(--serif);font-size:28px;line-height:1.15;color:var(--gray-900);margin-bottom:8px">Cell Division & <em style="color:var(--red-500);font-style:italic">Mitosis</em></div>
+      <div style="font-family:var(--serif);font-size:18px;color:var(--gray-700);margin-bottom:4px">Chapter 4: The Cell Cycle</div>
+      <div style="font-size:10px;color:var(--gray-400);font-family:var(--mono)">Refined, scholarly, trustworthy</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">DM Sans — Body & UI</div>
+      <div style="font-family:var(--sans);font-size:14px;line-height:1.75;color:var(--gray-600);font-weight:300;margin-bottom:10px">During mitosis, a cell duplicates its DNA and divides into two genetically identical daughter cells. This process is fundamental to growth and tissue repair.</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--red-600);background:var(--red-50);padding:6px 10px;border-radius:6px">JetBrains Mono — code &amp; data</div>
+    </div>
+  </div>
+
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+    <div class="comp-card-label">Type Scale</div>
+    <div class="type-scale">
+      <div class="ts-row"><span class="ts-tag">Display</span><span style="font-family:var(--serif);font-size:36px;color:var(--gray-900);line-height:1">Cell Biology</span></div>
+      <div class="ts-row"><span class="ts-tag">H1 / 28px</span><span style="font-family:var(--serif);font-size:28px;color:var(--gray-900);line-height:1">Chapter Overview</span></div>
+      <div class="ts-row"><span class="ts-tag">H2 / 22px</span><span style="font-family:var(--serif);font-size:22px;color:var(--gray-800);line-height:1">Lesson Resources</span></div>
+      <div class="ts-row"><span class="ts-tag">H3 / 18px</span><span style="font-family:var(--sans);font-size:18px;color:var(--gray-700);font-weight:500;line-height:1">Student Progress</span></div>
+      <div class="ts-row"><span class="ts-tag">Body / 14px</span><span style="font-family:var(--sans);font-size:14px;color:var(--gray-600);font-weight:300;line-height:1">Assignment details and class notes</span></div>
+      <div class="ts-row"><span class="ts-tag">Caption / 12px</span><span style="font-family:var(--sans);font-size:12px;color:var(--gray-400)">Last updated 2 hours ago</span></div>
+      <div class="ts-row"><span class="ts-tag">Label / 11px</span><span style="font-family:var(--sans);font-size:11px;color:var(--gray-500);font-weight:600;letter-spacing:0.1em;text-transform:uppercase">Section Title</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 SPACING + RADIUS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">03</span> Spacing & Radius</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Spacing Scale</div>
+      <div class="spacing-row">
+        <div class="sp-item"><div class="sp-box" style="width:4px;height:4px"></div><span class="sp-tag">4</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:8px;height:8px"></div><span class="sp-tag">8</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:12px;height:12px"></div><span class="sp-tag">12</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:16px;height:16px"></div><span class="sp-tag">16</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:24px;height:24px"></div><span class="sp-tag">24</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:32px;height:32px"></div><span class="sp-tag">32</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:48px;height:24px"></div><span class="sp-tag">48</span></div>
+        <div class="sp-item"><div class="sp-box" style="width:64px;height:24px"></div><span class="sp-tag">64</span></div>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Border Radius</div>
+      <div class="radius-row">
+        <div class="rad-item"><div class="rad-box" style="border-radius:4px"></div><span class="rad-tag">4px</span></div>
+        <div class="rad-item"><div class="rad-box" style="border-radius:8px"></div><span class="rad-tag">8px</span></div>
+        <div class="rad-item"><div class="rad-box" style="border-radius:12px"></div><span class="rad-tag">12px</span></div>
+        <div class="rad-item"><div class="rad-box" style="border-radius:16px"></div><span class="rad-tag">16px</span></div>
+        <div class="rad-item"><div class="rad-box" style="border-radius:24px"></div><span class="rad-tag">24px</span></div>
+        <div class="rad-item"><div class="rad-box" style="border-radius:9999px;width:60px;height:28px"></div><span class="rad-tag">pill</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 NAVIGATION -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">04</span> Navigation</div>
+  <div class="nav-demo">
+    <div class="nav-brand">Bio<span>Edu</span></div>
+    <div class="nav-links">
+      <div class="nav-link active"><i class="ti ti-layout-dashboard" style="font-size:13px;margin-right:4px"></i>Dashboard</div>
+      <div class="nav-link"><i class="ti ti-books" style="font-size:13px;margin-right:4px"></i>Resources</div>
+      <div class="nav-link"><i class="ti ti-users" style="font-size:13px;margin-right:4px"></i>Students</div>
+      <div class="nav-link"><i class="ti ti-calendar" style="font-size:13px;margin-right:4px"></i>Classes</div>
+      <div class="nav-link"><i class="ti ti-sparkles" style="font-size:13px;margin-right:4px"></i>AI Tutor</div>
+    </div>
+    <div class="nav-end">
+      <div style="font-size:11px;color:rgba(255,255,255,0.35)">Mr. Rahman</div>
+      <div class="nav-avatar">MR</div>
+    </div>
+  </div>
+</div>
+
+<!-- 05 BUTTONS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">05</span> Buttons & Actions</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+    <div class="comp-card-label">Button Variants</div>
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn btn-primary"><i class="ti ti-upload" aria-hidden="true"></i>Upload Resource</button>
+      <button class="btn btn-secondary">View All Classes</button>
+      <button class="btn btn-danger"><i class="ti ti-trash" aria-hidden="true"></i>Delete</button>
+      <button class="btn btn-ghost"><i class="ti ti-sparkles" aria-hidden="true"></i>Ask AI</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm">Save Changes</button>
+      <button class="btn btn-secondary btn-sm">Cancel</button>
+      <button class="btn btn-icon" title="Settings"><i class="ti ti-settings" aria-hidden="true"></i></button>
+      <button class="btn btn-icon" title="Search"><i class="ti ti-search" aria-hidden="true"></i></button>
+      <button class="btn btn-icon" title="Notifications"><i class="ti ti-bell" aria-hidden="true"></i></button>
+      <button class="btn btn-icon" style="background:var(--gray-900);color:var(--white)" title="AI"><i class="ti ti-sparkles" aria-hidden="true"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- 06 BADGES + TAGS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">06</span> Badges & Tags</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+    <div class="badge-row">
+      <span class="badge badge-black"><i class="ti ti-sparkles" style="font-size:10px" aria-hidden="true"></i>AI Feature</span>
+      <span class="badge badge-red"><span class="badge-dot" style="background:var(--red-500)"></span>Live Class</span>
+      <span class="badge badge-default">PDF Resource</span>
+      <span class="badge badge-success"><span class="badge-dot" style="background:#43A047"></span>Submitted</span>
+      <span class="badge" style="background:#FFF8E1;color:#92400E;border:1px solid #FDE68A">⚠ Due Soon</span>
+      <span class="badge badge-default">Grade 10</span>
+      <span class="badge" style="background:var(--gray-900);color:var(--white)">Admin</span>
+      <span class="badge" style="background:var(--red-800);color:var(--white)">Teacher</span>
+      <span class="badge badge-default" style="background:var(--surface-2)">Student</span>
+    </div>
+  </div>
+</div>
+
+<!-- 07 FORM ELEMENTS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">07</span> Form Elements</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Input Fields</div>
+      <div class="form-stack">
+        <div class="form-group">
+          <label class="form-label">Lesson Title</label>
+          <input class="form-input" type="text" placeholder="e.g. Mitosis and Cell Division" value="Photosynthesis — Class 10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Chapter / Unit</label>
+          <select class="form-input">
+            <option>Unit 3: Plant Biology</option>
+            <option>Unit 4: Cell Biology</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Notes</label>
+          <textarea class="form-input" rows="3" placeholder="Add notes for students..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Search & Filters</div>
+      <div class="form-stack">
+        <div class="form-group">
+          <div style="position:relative">
+            <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:15px" aria-hidden="true"></i>
+            <input class="form-input" type="text" placeholder="Search resources, classes..." style="padding-left:34px">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span class="badge badge-black" style="cursor:pointer;font-size:12px;padding:5px 12px">All</span>
+          <span class="badge badge-default" style="cursor:pointer;font-size:12px;padding:5px 12px">PDFs</span>
+          <span class="badge badge-default" style="cursor:pointer;font-size:12px;padding:5px 12px">Videos</span>
+          <span class="badge badge-default" style="cursor:pointer;font-size:12px;padding:5px 12px">Quizzes</span>
+          <span class="badge badge-default" style="cursor:pointer;font-size:12px;padding:5px 12px">Notes</span>
+        </div>
+        <div class="form-group" style="margin-top:8px">
+          <label class="form-label">Sort by</label>
+          <select class="form-input">
+            <option>Newest First</option>
+            <option>Most Accessed</option>
+            <option>Alphabetical</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 08 CARDS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">08</span> Content Cards</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+
+    <!-- Resource card -->
+    <div class="resource-card">
+      <div class="rc-top">
+        <div class="rc-icon rc-icon-bio"><i class="ti ti-file-text" aria-hidden="true"></i></div>
+        <span class="badge badge-default" style="font-size:10px">PDF</span>
+      </div>
+      <div class="rc-title">Photosynthesis Notes</div>
+      <div class="rc-meta">Unit 3 <span class="rc-dot"></span> Class 10 <span class="rc-dot"></span> 2.4 MB</div>
+      <div class="rc-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1;font-size:11px;padding:6px 10px">View</button>
+        <button class="btn btn-icon btn-sm"><i class="ti ti-download" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    <!-- Class card -->
+    <div class="resource-card" style="background:var(--gray-900);border-color:rgba(255,255,255,0.08)">
+      <div class="rc-top">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(196,31,31,0.25);display:flex;align-items:center;justify-content:center;color:var(--red-300);font-size:18px"><i class="ti ti-video" aria-hidden="true"></i></div>
+        <span class="badge badge-red" style="font-size:10px"><span class="badge-dot" style="background:var(--red-400)"></span>Live</span>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:4px">Cell Division</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);display:flex;gap:6px;align-items:center">Today<span class="rc-dot" style="background:rgba(255,255,255,0.2)"></span>2:00 PM</div>
+      <div class="rc-actions" style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;background:var(--red-500);padding:6px 10px">Join Class</button>
+        <button class="btn btn-icon btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.1)"><i class="ti ti-dots" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    <!-- AI card -->
+    <div class="ai-card">
+      <div class="ai-badge"><i class="ti ti-sparkles" style="font-size:10px" aria-hidden="true"></i>AI Tutor</div>
+      <div class="ai-title">Need help with<br>a topic?</div>
+      <div class="ai-sub">Ask anything about your biology lessons. Get instant explanations, diagrams, and practice questions.</div>
+      <div class="ai-prompt">Ask: "Explain mitosis in simple terms…"</div>
+    </div>
+  </div>
+</div>
+
+<!-- 09 DATA TABLE -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">09</span> Data Tables</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600;color:var(--gray-900)">Student Roster — Class 10B</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm">Export</button>
+        <button class="btn btn-primary btn-sm"><i class="ti ti-plus" aria-hidden="true"></i>Add Student</button>
+      </div>
+    </div>
+    <table class="table-demo" style="width:100%">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>ID</th>
+          <th>Attendance</th>
+          <th>Last Submission</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="td-avatar">RA</div><span class="td-name">Riya Ahmed</span></div></td>
+          <td style="color:var(--gray-400);font-family:var(--mono);font-size:11px">#2024-041</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div style="height:4px;width:60px;background:var(--surface-3);border-radius:2px"><div style="height:4px;width:52px;background:#43A047;border-radius:2px"></div></div><span style="font-size:11px;color:var(--gray-500)">87%</span></div></td>
+          <td style="color:var(--gray-500);font-size:11px">Photosynthesis Quiz</td>
+          <td><span class="badge badge-success">Active</span></td>
+          <td><button class="btn btn-icon btn-sm"><i class="ti ti-dots" aria-hidden="true"></i></button></td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="td-avatar">TH</div><span class="td-name">Tahmid Hossain</span></div></td>
+          <td style="color:var(--gray-400);font-family:var(--mono);font-size:11px">#2024-042</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div style="height:4px;width:60px;background:var(--surface-3);border-radius:2px"><div style="height:4px;width:38px;background:#F57C00;border-radius:2px"></div></div><span style="font-size:11px;color:var(--gray-500)">63%</span></div></td>
+          <td style="color:var(--gray-500);font-size:11px">Cell Structure Notes</td>
+          <td><span class="badge" style="background:#FFF8E1;color:#92400E;border:1px solid #FDE68A;font-size:10px">At Risk</span></td>
+          <td><button class="btn btn-icon btn-sm"><i class="ti ti-dots" aria-hidden="true"></i></button></td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="td-avatar" style="background:var(--red-50);color:var(--red-600)">SA</div><span class="td-name">Sumaiya Akter</span></div></td>
+          <td style="color:var(--gray-400);font-family:var(--mono);font-size:11px">#2024-043</td>
+          <td><div style="display:flex;align-items:center;gap:5px"><div style="height:4px;width:60px;background:var(--surface-3);border-radius:2px"><div style="height:4px;width:57px;background:#43A047;border-radius:2px"></div></div><span style="font-size:11px;color:var(--gray-500)">95%</span></div></td>
+          <td style="color:var(--gray-500);font-size:11px">Genetics Assignment</td>
+          <td><span class="badge badge-black" style="font-size:10px">Top Student</span></td>
+          <td><button class="btn btn-icon btn-sm"><i class="ti ti-dots" aria-hidden="true"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 10 ALERTS / NOTIFICATIONS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">10</span> Alerts & Notifications</div>
+  <div class="alert-stack">
+    <div class="alert alert-success">
+      <i class="ti ti-circle-check alert-icon" aria-hidden="true"></i>
+      <div class="alert-content"><div class="alert-title">Resource uploaded successfully</div><div class="alert-body">Photosynthesis Notes.pdf is now visible to Class 10B students.</div></div>
+    </div>
+    <div class="alert alert-warn">
+      <i class="ti ti-alert-triangle alert-icon" aria-hidden="true"></i>
+      <div class="alert-content"><div class="alert-title">Assignment deadline approaching</div><div class="alert-body">Cell Division Quiz is due in 2 hours. 8 students haven't submitted yet.</div></div>
+    </div>
+    <div class="alert alert-danger">
+      <i class="ti ti-alert-circle alert-icon" aria-hidden="true"></i>
+      <div class="alert-content"><div class="alert-title">Student attendance low</div><div class="alert-body">Tahmid Hossain has missed 4 consecutive classes. Consider reaching out.</div></div>
+    </div>
+    <div class="alert alert-info">
+      <i class="ti ti-info-circle alert-icon" aria-hidden="true"></i>
+      <div class="alert-content"><div class="alert-title">AI summary ready</div><div class="alert-body">Your lecture notes for today's session have been automatically summarized.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 11 SHADOW + ICONS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">11</span> Elevation & Icons</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Shadow Scale</div>
+      <div class="shadow-row">
+        <div class="sh-card sh-sm"><span>sm</span><span style="font-size:9px;color:var(--gray-300)">6px</span></div>
+        <div class="sh-card sh-md"><span>md</span><span style="font-size:9px;color:var(--gray-300)">16px</span></div>
+        <div class="sh-card sh-lg"><span>lg</span><span style="font-size:9px;color:var(--gray-300)">32px</span></div>
+        <div class="sh-card sh-xl"><span>xl</span><span style="font-size:9px;color:var(--gray-300)">48px</span></div>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div class="comp-card-label">Icon System (Tabler Outline)</div>
+      <div class="icon-grid">
+        <div class="icon-item red"><i class="ti ti-sparkles" aria-hidden="true"></i><span class="icon-name">AI</span></div>
+        <div class="icon-item black"><i class="ti ti-upload" aria-hidden="true"></i><span class="icon-name">upload</span></div>
+        <div class="icon-item"><i class="ti ti-books" aria-hidden="true"></i><span class="icon-name">resources</span></div>
+        <div class="icon-item"><i class="ti ti-users" aria-hidden="true"></i><span class="icon-name">students</span></div>
+        <div class="icon-item"><i class="ti ti-calendar" aria-hidden="true"></i><span class="icon-name">schedule</span></div>
+        <div class="icon-item"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="icon-name">analytics</span></div>
+        <div class="icon-item red"><i class="ti ti-video" aria-hidden="true"></i><span class="icon-name">live</span></div>
+        <div class="icon-item"><i class="ti ti-file-text" aria-hidden="true"></i><span class="icon-name">notes</span></div>
+        <div class="icon-item"><i class="ti ti-bell" aria-hidden="true"></i><span class="icon-name">notify</span></div>
+        <div class="icon-item"><i class="ti ti-lock" aria-hidden="true"></i><span class="icon-name">access</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 12 MOTION TOKENS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">12</span> Motion & Animation Tokens</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+    <div class="motion-row">
+      <div class="motion-item"><div class="motion-label">--duration-fast</div><div class="motion-value">100ms</div><div class="motion-desc">Button press, toggle</div></div>
+      <div class="motion-item"><div class="motion-label">--duration-base</div><div class="motion-value">180ms</div><div class="motion-desc">Hover, fade, reveal</div></div>
+      <div class="motion-item"><div class="motion-label">--duration-slow</div><div class="motion-value">300ms</div><div class="motion-desc">Modal, drawer open</div></div>
+      <div class="motion-item"><div class="motion-label">--duration-page</div><div class="motion-value">450ms</div><div class="motion-desc">Page transitions</div></div>
+      <div class="motion-item"><div class="motion-label">--ease-out</div><div class="motion-value">cubic</div><div class="motion-desc">Ease-out for appears</div></div>
+      <div class="motion-item"><div class="motion-label">--ease-spring</div><div class="motion-value">spring</div><div class="motion-desc">Micro-interactions</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 13 LAYOUT PATTERNS -->
+<div class="ds-section">
+  <div class="ds-section-label"><span class="num">13</span> Responsive Layout Patterns</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+    <div>
+      <div class="layout-demo" style="height:160px">
+        <div class="layout-nav" style="background:var(--gray-900)">
+          <div class="layout-dot" style="background:#C41F1F"></div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);flex:1;text-align:center">Dashboard Layout</div>
+        </div>
+        <div class="layout-body">
+          <div class="layout-sidebar">
+            <div class="layout-sidebar-item active"></div>
+            <div class="layout-sidebar-item"></div>
+            <div class="layout-sidebar-item"></div>
+            <div class="layout-sidebar-item"></div>
+          </div>
+          <div class="layout-main">
+            <div class="layout-block"></div><div class="layout-block"></div><div class="layout-block"></div>
+            <div class="layout-block" style="grid-column:span 2"></div><div class="layout-block"></div>
+          </div>
+        </div>
+      </div>
+      <div class="layout-label">Admin Dashboard</div>
+    </div>
+    <div>
+      <div class="layout-demo" style="height:160px">
+        <div class="layout-nav" style="background:var(--gray-900)">
+          <div class="layout-dot" style="background:#C41F1F"></div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);flex:1;text-align:center">Resource Grid</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px">
+          <div class="layout-block" style="height:44px;border-radius:8px"></div>
+          <div class="layout-block" style="height:44px;border-radius:8px"></div>
+          <div class="layout-block" style="height:44px;border-radius:8px"></div>
+          <div class="layout-block" style="height:44px;border-radius:8px;background:var(--red-50);border-color:var(--red-100)"></div>
+        </div>
+      </div>
+      <div class="layout-label">Student Resource View</div>
+    </div>
+    <div>
+      <div class="layout-demo" style="height:160px">
+        <div class="layout-nav" style="background:var(--gray-900)">
+          <div class="layout-dot" style="background:#C41F1F"></div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);flex:1;text-align:center">Mobile View</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:10px">
+          <div class="layout-block" style="height:24px;border-radius:6px"></div>
+          <div class="layout-block" style="height:24px;border-radius:6px"></div>
+          <div class="layout-block" style="height:24px;border-radius:6px;background:var(--gray-200)"></div>
+          <div class="layout-block" style="height:24px;border-radius:6px"></div>
+        </div>
+      </div>
+      <div class="layout-label">Mobile Responsive</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="ds-footer">
+  <div>
+    <div class="ds-footer-brand">Bio<span>Edu</span></div>
+    <div class="ds-footer-meta" style="margin-top:5px">Design System v1.0 · Biology Education Platform</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:11px;color:rgba(255,255,255,0.35)">DM Serif Display + DM Sans + JetBrains Mono</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:3px">Black · Red · White — Soothing EdTech</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

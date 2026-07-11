@@ -1,0 +1,32 @@
+/* Extends AssistantsManager.module.css — only the student-form additions live here. */
+
+.modalWider {
+  max-width: 620px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.spanFull {
+  grid-column: 1 / -1;
+}
+
+.optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--theme-text-tertiary);
+}
+
+@media (max-width: 560px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .spanFull {
+    grid-column: auto;
+  }
+}

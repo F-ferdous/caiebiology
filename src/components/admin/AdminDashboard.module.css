@@ -1,0 +1,312 @@
+/* ============================================================
+   Admin Dashboard — stat cards, table, quick actions
+   ============================================================ */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+}
+
+/* ---- Page header ---- */
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.pageSubtitle {
+  margin-top: var(--space-2);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+/* ---- Stat cards ---- */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.statCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  background: var(--theme-bg-card);
+  border: 1px solid var(--theme-stat-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition:
+    box-shadow var(--duration-base) var(--ease-out),
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.statCard:hover {
+  box-shadow: var(--theme-shadow-md);
+}
+
+.statIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--theme-icon-bg);
+  border: 1px solid var(--theme-icon-border);
+  color: var(--theme-icon-color);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.statIcon .ti {
+  font-size: 19px;
+}
+
+.statValue {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.statLabel {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.statTrend {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--theme-text-tertiary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+/* ---- Panels ---- */
+.panels {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.panel {
+  background: var(--theme-bg-card);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.panelTitle {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.panelAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-dark-accent);
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.panelAction:hover {
+  color: var(--red-400);
+}
+
+.panelAction .ti {
+  font-size: 13px;
+}
+
+/* ---- Table (design.md §9.6) ---- */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--theme-text-tertiary);
+  border-bottom: 1.5px solid var(--theme-border);
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--theme-text-secondary);
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  transition: background-color var(--duration-base) var(--ease-out);
+}
+
+.table tbody tr:hover {
+  background: var(--theme-nav-hover-bg);
+}
+
+.studentCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+  color: var(--theme-text-primary);
+}
+
+.tableAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-circle);
+  background: var(--theme-icon-bg);
+  border: 1px solid var(--theme-icon-border);
+  color: var(--theme-icon-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.statusPaid {
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.statusPending {
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
+.statusDue {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+/* ---- Quick actions ---- */
+.quickGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.quickLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: var(--theme-bg-card-alt);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  text-decoration: none;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background-color var(--duration-slow) var(--ease-out);
+}
+
+.quickLink .ti {
+  font-size: 18px;
+  color: var(--theme-icon-color);
+}
+
+.quickLink:hover {
+  border-color: var(--red-100);
+  color: var(--theme-text-primary);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 1200px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .statGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quickGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .statCard {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}

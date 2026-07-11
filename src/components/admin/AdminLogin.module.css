@@ -1,0 +1,136 @@
+/* ============================================================
+   Admin Login — centered card with dark brand header
+   ============================================================ */
+.section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-block: var(--space-10);
+  background: var(--theme-bg-primary);
+  transition: background-color var(--duration-slow) var(--ease-out);
+}
+
+.wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--theme-bg-card);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--theme-shadow-md);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+/* Dark header strip — matches the AI-card treatment */
+.header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  background: var(--gray-900);
+  border-bottom: 1px solid rgba(196, 31, 31, 0.25);
+  overflow: hidden;
+}
+
+.headerGlow {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 220px;
+  border-radius: var(--radius-circle);
+  background: radial-gradient(circle, rgba(196, 31, 31, 0.3), transparent 70%);
+  pointer-events: none;
+}
+
+.logoBox {
+  width: 44px;
+  height: 44px;
+  background: var(--red-400);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(196, 31, 31, 0.35);
+}
+
+.logoBox i {
+  color: var(--white);
+  font-size: 1.5rem;
+}
+
+.headerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(196, 31, 31, 0.2);
+  border: 1px solid rgba(196, 31, 31, 0.3);
+  color: var(--red-200);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--white);
+}
+
+.title em {
+  color: var(--red-300);
+  font-style: normal;
+}
+
+.headerNote {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form {
+  padding: var(--space-8) var(--space-6) var(--space-6);
+}
+
+.backLine {
+  padding: 0 var(--space-6) var(--space-6);
+  text-align: center;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-text-muted);
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.backLink:hover {
+  color: var(--theme-dark-accent);
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-block: var(--space-6);
+    align-items: flex-start;
+  }
+}
