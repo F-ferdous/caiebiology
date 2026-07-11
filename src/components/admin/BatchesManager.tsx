@@ -22,6 +22,8 @@ type Batch = {
   time: string;
   location: string;
   details: string;
+  seats: number;
+  classType: string;
   createdAt: Timestamp | null;
 };
 
@@ -34,6 +36,7 @@ type ModalState =
   | { status: "confirm"; batch: Batch };
 
 const classOptions = ["IX", "X", "XI", "XII"];
+const classTypeOptions = ["Online", "Offline(Physical)", "Hybrid"];
 
 function errorMessage(err: unknown, fallback: string) {
   const code = (err as { code?: string }).code ?? "";
@@ -67,6 +70,8 @@ export default function BatchesManager() {
     const time = String(data.get("time") ?? "").trim();
     const location = String(data.get("location") ?? "").trim();
     const details = String(data.get("details") ?? "").trim();
+    const seats = Number(data.get("seats") ?? 0);
+    const classType = String(data.get("classType") ?? "").trim();
 
     const db = getFirebaseDb();
 
@@ -78,6 +83,8 @@ export default function BatchesManager() {
           time,
           location,
           details,
+          seats,
+          classType,
         });
         setModal({
           status: "success",
@@ -97,6 +104,8 @@ export default function BatchesManager() {
         time,
         location,
         details,
+        seats,
+        classType,
         createdAt: serverTimestamp(),
       });
       setModal({
@@ -180,6 +189,8 @@ export default function BatchesManager() {
                   <th>Class</th>
                   <th>Time</th>
                   <th>Location</th>
+                  <th>Seats</th>
+                  <th>Type</th>
                   <th>Details</th>
                   <th className={styles.actionsHead}>Actions</th>
                 </tr>
@@ -192,6 +203,8 @@ export default function BatchesManager() {
                     </td>
                     <td>{b.time}</td>
                     <td>{b.location}</td>
+                    <td>{b.seats}</td>
+                    <td>{b.classType}</td>
                     <td>{b.details}</td>
                     <td>
                       <span className={styles.actions}>
@@ -269,6 +282,24 @@ export default function BatchesManager() {
                   <input className={styles.input} id="batch-location" name="location" type="text"
                     placeholder="e.g. Dhanmondi campus, Room 3" required autoComplete="off"
                     defaultValue={editing?.location} />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="batch-seats">Number of Seats</label>
+                  <input className={styles.input} id="batch-seats" name="seats" type="number"
+                    placeholder="e.g. 30" required min={1} autoComplete="off"
+                    defaultValue={editing?.seats} />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="batch-class-type">Class Type</label>
+                  <select className={styles.input} id="batch-class-type" name="classType"
+                    required defaultValue={editing?.classType ?? ""}>
+                    <option value="" disabled>Select a class type</option>
+                    {classTypeOptions.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className={styles.field}>
