@@ -1,0 +1,239 @@
+/* ============================================================
+   Student portal — info lists, schedule items, empty states
+   (page scaffolding reuses AdminDashboard.module.css)
+   ============================================================ */
+
+/* ---- Label / value rows (batch details, personal info) ---- */
+.infoList {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--theme-text-tertiary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.infoValue {
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: right;
+  color: var(--theme-text-primary);
+  overflow-wrap: anywhere;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.infoValueMuted {
+  color: var(--theme-text-tertiary);
+  font-weight: 400;
+}
+
+/* ---- List items (tests, resources, payments) ---- */
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: var(--theme-bg-card-alt);
+  text-decoration: none;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background-color var(--duration-slow) var(--ease-out);
+}
+
+a.item:hover {
+  border-color: var(--red-100);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.itemIcon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--theme-icon-bg);
+  border: 1px solid var(--theme-icon-border);
+  color: var(--theme-icon-color);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.itemIcon .ti {
+  font-size: 16px;
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.itemMeta {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--theme-text-muted);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.itemAside {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  font-size: 11.5px;
+  color: var(--theme-text-secondary);
+}
+
+.itemDate {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--theme-dark-accent);
+  white-space: nowrap;
+}
+
+/* ---- Empty states ---- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.empty .ti {
+  font-size: 26px;
+  color: var(--theme-text-tertiary);
+}
+
+.emptyText {
+  font-size: 12.5px;
+  color: var(--theme-text-muted);
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+/* ---- Profile header ---- */
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--theme-bg-card);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
+}
+
+.profileAvatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-circle);
+  background: var(--theme-icon-bg);
+  border: 1px solid var(--theme-icon-border);
+  color: var(--theme-icon-color);
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.profileName {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--theme-text-primary);
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.profileMeta {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+/* ---- Two-column panel grid (profile, dashboard right rail) ---- */
+.panelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .panelGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Stacked panels within a dashboard column ---- */
+.panelColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ---- Small note under panels ---- */
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 11.5px;
+  color: var(--theme-text-tertiary);
+}
+
+.note .ti {
+  font-size: 13px;
+}

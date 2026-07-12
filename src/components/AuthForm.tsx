@@ -2,6 +2,15 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  ASSISTANT_EMAIL_DOMAIN,
+  getFirebaseAuth,
+  getFirebaseDb,
+  isFirebaseConfigured,
+} from "@/lib/firebase";
 import styles from "./AuthForm.module.css";
 
 type Mode = "login" | "signup";
@@ -31,29 +40,85 @@ const panelPoints = [
   { icon: "ti-sparkles", text: "AI tutor, available 24/7" },
 ];
 
+const loginErrorMessages: Record<string, string> = {
+  "auth/invalid-credential": "Incorrect email or password.",
+  "auth/wrong-password": "Incorrect email or password.",
+  "auth/user-not-found": "No account found with this email.",
+  "auth/too-many-requests": "Too many attempts — please wait a moment and try again.",
+  "auth/network-request-failed": "Network error — check your connection and try again.",
+};
+
 export default function AuthForm({ mode }: { mode: Mode }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
   const c = copy[mode];
+
+  const handleLogin = async (email: string, password: string) => {
+    if (!isFirebaseConfigured) {
+      setError("Sign-in is temporarily unavailable — please try again later.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const auth = getFirebaseAuth();
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Assistants use synthetic emails — send them to their own portal
+      if (credential.user.email?.endsWith(`@${ASSISTANT_EMAIL_DOMAIN}`)) {
+        router.replace("/assistant");
+        return;
+      }
+
+      // Only enrolled students may enter the student dashboard
+      const snap = await getDocs(
+        query(collection(getFirebaseDb(), "Students"), where("uid", "==", credential.user.uid))
+      );
+      if (snap.empty) {
+        await signOut(auth);
+        setError("No student account found for this email. Contact your teacher to get enrolled.");
+        setBusy(false);
+        return;
+      }
+
+      setSubmitted(true);
+      router.replace("/student");
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      setError(loginErrorMessages[code] ?? `Could not sign in. (${code || (err as Error).message})`);
+      setBusy(false);
+    }
+  };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
     const data = new FormData(e.currentTarget);
+    const email = String(data.get("email") ?? "").trim().toLowerCase();
     const password = String(data.get("password") ?? "");
+
+    if (mode === "login") {
+      if (!password) {
+        setError("Enter your password.");
+        return;
+      }
+      void handleLogin(email, password);
+      return;
+    }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
       return;
     }
-    if (mode === "signup" && password !== String(data.get("confirmPassword") ?? "")) {
+    if (password !== String(data.get("confirmPassword") ?? "")) {
       setError("Passwords do not match.");
       return;
     }
 
-    // No backend yet — acknowledge the submission locally
+    // Signup has no backend yet — acknowledge the submission locally
     setSubmitted(true);
   };
 
@@ -207,8 +272,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                   </div>
                 )}
 
-                <button type="submit" className={`btn btn-primary btn-lg ${styles.submitBtn}`}>
-                  {c.submit}
+                <button
+                  type="submit"
+                  className={`btn btn-primary btn-lg ${styles.submitBtn}`}
+                  disabled={busy}
+                >
+                  {busy ? "Signing in…" : c.submit}
                   <i className="ti ti-arrow-right" aria-hidden="true" />
                 </button>
               </form>

@@ -13,6 +13,7 @@ type Props = {
   navItems: PanelNavItem[];
   badgeLabel: string;
   avatarInitial: string;
+  sectionsLabel?: string;
   onLogout: () => void;
   children: React.ReactNode;
 };
@@ -22,6 +23,7 @@ export default function PanelShell({
   navItems,
   badgeLabel,
   avatarInitial,
+  sectionsLabel = "Manage",
   onLogout,
   children,
 }: Props) {
@@ -64,7 +66,7 @@ export default function PanelShell({
             <span className={styles.navLabel}>{dashboard.label}</span>
           </Link>
 
-          <span className={styles.navGroupLabel}>Manage</span>
+          <span className={styles.navGroupLabel}>{sectionsLabel}</span>
           {sections.map((s) => (
             <Link
               key={s.href}

@@ -12,7 +12,7 @@ const assistantSlugs = adminSections
 
 // Sections with a dedicated page (e.g. /assistant/batches) are excluded —
 // their static route takes precedence over this placeholder.
-const builtSections = ["batches", "students"];
+const builtSections = ["batches", "students", "payments"];
 
 export function generateStaticParams() {
   return assistantSlugs
