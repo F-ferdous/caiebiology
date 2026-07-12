@@ -149,11 +149,6 @@ export default function ParentsCorner() {
                 </div>
               ))}
             </div>
-
-            <a href="#signup" className="btn btn-primary" id="parents-cta">
-              <i className="ti ti-users" aria-hidden="true" />
-              Create Parent Account
-            </a>
           </div>
 
           {/* Right: phone mockup */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import styles from "./Hero.module.css";
 import BioIllustration from "@/components/BioIllustration";
 
@@ -51,14 +52,14 @@ export default function Hero() {
           </p>
 
           <div className={styles.ctaRow}>
-            <a href="#signup" className="btn btn-primary btn-lg" id="hero-cta-primary">
+            <Link href="/signup" className="btn btn-primary btn-lg" id="hero-cta-primary">
               <i className="ti ti-books" aria-hidden="true" />
               Join a Batch
-            </a>
-            <a href="#features" className={`btn btn-lg ${styles.ctaGhost}`} id="hero-cta-secondary">
+            </Link>
+            <Link href="/features" className={`btn btn-lg ${styles.ctaGhost}`} id="hero-cta-secondary">
               See Features
               <i className="ti ti-arrow-right" aria-hidden="true" />
-            </a>
+            </Link>
           </div>
 
           {/* Compact pill badges — from design system inspiration */}

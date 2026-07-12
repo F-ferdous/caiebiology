@@ -1,26 +1,25 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  collection,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+} from "firebase/firestore";
+import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { adminSections } from "@/lib/adminNav";
 import styles from "./AdminDashboard.module.css";
 
-const stats = [
-  { icon: "ti-users", label: "Total Students", value: "248", trend: "+12 this month" },
-  { icon: "ti-stack-2", label: "Active Batches", value: "6", trend: "2 starting soon" },
-  { icon: "ti-books", label: "Resources", value: "132", trend: "+8 this week" },
-  { icon: "ti-credit-card", label: "Fees Collected", value: "৳ 84,500", trend: "July 2026" },
-];
-
-const recentStudents = [
-  { name: "Nusrat Jahan", batch: "AS Level — Batch A", date: "Jul 8, 2026", status: "Paid" },
-  { name: "Rafiul Hasan", batch: "A2 Level — Batch B", date: "Jul 7, 2026", status: "Pending" },
-  { name: "Tasnim Akter", batch: "IGCSE — Batch C", date: "Jul 6, 2026", status: "Paid" },
-  { name: "Sadman Sakib", batch: "AS Level — Batch A", date: "Jul 5, 2026", status: "Paid" },
-  { name: "Maliha Rahman", batch: "A2 Level — Batch B", date: "Jul 4, 2026", status: "Due" },
-];
-
-const statusVariant: Record<string, string> = {
-  Paid: styles.statusPaid,
-  Pending: styles.statusPending,
-  Due: styles.statusDue,
+type RecentStudent = {
+  id: string;
+  name: string;
+  class: string;
+  batchLabel: string;
+  createdAt: Timestamp | null;
 };
 
 function initials(name: string) {
@@ -31,7 +30,63 @@ function initials(name: string) {
     .join("");
 }
 
+function formatDate(ts: Timestamp | null) {
+  if (!ts) return "—";
+  return ts.toDate().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function AdminDashboard() {
+  const [studentCount, setStudentCount] = useState(0);
+  const [batchCount, setBatchCount] = useState(0);
+  const [assistantCount, setAssistantCount] = useState(0);
+  const [feesCollected, setFeesCollected] = useState(0);
+  const [recentStudents, setRecentStudents] = useState<RecentStudent[]>([]);
+  const [loading, setLoading] = useState(isFirebaseConfigured);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    const db = getFirebaseDb();
+
+    const unsubs = [
+      onSnapshot(collection(db, "Students"), (snap) => {
+        setStudentCount(snap.size);
+      }),
+      onSnapshot(collection(db, "Batches"), (snap) => {
+        setBatchCount(snap.size);
+      }),
+      onSnapshot(collection(db, "Assistants"), (snap) => {
+        setAssistantCount(snap.size);
+      }),
+      onSnapshot(collection(db, "Payments"), (snap) => {
+        setFeesCollected(
+          snap.docs.reduce((sum, d) => sum + (Number(d.data().amount) || 0), 0)
+        );
+      }),
+      onSnapshot(
+        query(collection(db, "Students"), orderBy("createdAt", "desc"), limit(5)),
+        (snap) => {
+          setRecentStudents(
+            snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<RecentStudent, "id">) }))
+          );
+          setLoading(false);
+        },
+        () => setLoading(false)
+      ),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
+  const stats = [
+    { icon: "ti-users", label: "Total Students", value: String(studentCount) },
+    { icon: "ti-stack-2", label: "Active Batches", value: String(batchCount) },
+    { icon: "ti-user-check", label: "Assistants", value: String(assistantCount) },
+    { icon: "ti-credit-card", label: "Fees Collected", value: `৳ ${feesCollected.toLocaleString()}` },
+  ];
+
   return (
     <div className={styles.dashboard}>
       <header className={styles.pageHeader}>
@@ -56,7 +111,6 @@ export default function AdminDashboard() {
             <div>
               <p className={styles.statValue}>{s.value}</p>
               <p className={styles.statLabel}>{s.label}</p>
-              <p className={styles.statTrend}>{s.trend}</p>
             </div>
           </div>
         ))}
@@ -76,31 +130,37 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Student</th>
+                  <th>Class</th>
                   <th>Batch</th>
                   <th>Enrolled</th>
-                  <th>Payment</th>
                 </tr>
               </thead>
               <tbody>
-                {recentStudents.map((s) => (
-                  <tr key={s.name}>
-                    <td>
-                      <span className={styles.studentCell}>
-                        <span className={styles.tableAvatar} aria-hidden="true">
-                          {initials(s.name)}
-                        </span>
-                        {s.name}
-                      </span>
-                    </td>
-                    <td>{s.batch}</td>
-                    <td>{s.date}</td>
-                    <td>
-                      <span className={`${styles.status} ${statusVariant[s.status]}`}>
-                        {s.status}
-                      </span>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className={styles.emptyCell}>Loading…</td>
                   </tr>
-                ))}
+                ) : recentStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={styles.emptyCell}>No students enrolled yet.</td>
+                  </tr>
+                ) : (
+                  recentStudents.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <span className={styles.studentCell}>
+                          <span className={styles.tableAvatar} aria-hidden="true">
+                            {initials(s.name)}
+                          </span>
+                          {s.name}
+                        </span>
+                      </td>
+                      <td>{s.class ? `Class ${s.class}` : "—"}</td>
+                      <td>{s.batchLabel || "—"}</td>
+                      <td>{formatDate(s.createdAt)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

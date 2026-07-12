@@ -223,6 +223,14 @@
   letter-spacing: 0.02em;
 }
 
+.emptyCell {
+  text-align: center;
+  color: var(--theme-text-tertiary);
+  font-size: 12px;
+  font-weight: 300;
+  padding: var(--space-8) 12px !important;
+}
+
 .status {
   display: inline-flex;
   padding: 2px 10px;

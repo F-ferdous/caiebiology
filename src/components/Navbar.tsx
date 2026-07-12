@@ -6,9 +6,9 @@ import { useTheme } from "./ThemeProvider";
 import styles from "./Navbar.module.css";
 
 const navLinks = [
-  { label: "Home", href: "/#home" },
-  { label: "Batches", href: "/#batches" },
-  { label: "Features", href: "/#features" },
+  { label: "Home", href: "/" },
+  { label: "Batches", href: "/batches" },
+  { label: "Features", href: "/features" },
   { label: "AI Tutor", href: "/#ai" },
 ];
 

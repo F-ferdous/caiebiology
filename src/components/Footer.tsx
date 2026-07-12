@@ -17,7 +17,10 @@ export default function Footer() {
             </span>
           </a>
           <p className={styles.tagline}>
-            CAIE biology education — for teachers &amp; students.
+            CAIE-BIOLOGY is a dedicated biology learning platform for Cambridge
+            (CAIE) students — IGCSE, AS &amp; A Level. Join live batches taught in
+            small groups, access curated notes and past-paper resources, and get
+            instant help from an AI tutor trained on the CAIE syllabus.
           </p>
           <div className={styles.social}>
             {[
@@ -38,12 +41,12 @@ export default function Footer() {
             <h3 className={styles.groupTitle}>Platform</h3>
             <ul role="list">
               {[
-                { label: "Features", href: "/#features" },
+                { label: "Home", href: "/" },
+                { label: "Features", href: "/features" },
+                { label: "Batches", href: "/batches" },
                 { label: "AI Tutor", href: "/#ai" },
-                { label: "Batches", href: "/#batches" },
-                { label: "Home", href: "/#home" },
               ].map((l) => (
-                <li key={l.label}><a href={l.href} className={styles.link}>{l.label}</a></li>
+                <li key={l.label}><Link href={l.href} className={styles.link}>{l.label}</Link></li>
               ))}
             </ul>
           </div>

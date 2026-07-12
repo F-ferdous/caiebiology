@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import styles from "./CTASection.module.css";
 
 export default function CTASection() {
@@ -30,14 +31,10 @@ export default function CTASection() {
             <span className={styles.accent}>starts here.</span>
           </h2>
           <div className={styles.actions}>
-            <a href="#signup" className="btn btn-primary btn-lg" id="cta-student">
+            <Link href="/signup" className="btn btn-primary btn-lg" id="cta-student">
               <i className="ti ti-books" aria-hidden="true" />
               Join as Student
-            </a>
-            <a href="#teacher" className={`btn btn-lg ${styles.teacherBtn}`} id="cta-teacher">
-              <i className="ti ti-layout-dashboard" aria-hidden="true" />
-              Join as Teacher
-            </a>
+            </Link>
           </div>
           <p className={styles.footnote}>
             <i className="ti ti-shield-check" aria-hidden="true" />

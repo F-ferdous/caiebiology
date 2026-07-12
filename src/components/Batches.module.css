@@ -164,6 +164,58 @@
   padding: 2px 8px;
 }
 
+/* Details text */
+.cardDetails {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--theme-text-tertiary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Seats line */
+.seatsLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-text-muted);
+  font-family: var(--font-mono);
+}
+
+.seatsLine .ti {
+  font-size: 13px;
+  color: var(--red-400);
+}
+
+/* Empty / loading state */
+.emptyState {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--theme-text-tertiary);
+  text-align: center;
+  padding: var(--space-10) 0;
+  border: 1px dashed var(--theme-border);
+  border-radius: var(--radius-xl);
+}
+
+/* View-all row */
+.viewAllRow {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-10);
+}
+
+/* Standalone /batches page — clear the fixed navbar */
+.standalone {
+  padding-top: calc(84px + var(--space-10));
+  min-height: 70vh;
+}
+
 /* Seat bar */
 .seatBar {
   display: flex;
