@@ -4,16 +4,17 @@ import { useEffect, useRef } from "react";
 import styles from "./Instructor.module.css";
 
 const credentials = [
-  { icon: "ti-award", text: "M.Sc. Biochemistry, University of Dhaka" },
-  { icon: "ti-certificate", text: "CAIE Certified Examiner" },
-  { icon: "ti-calendar", text: "12 years classroom teaching" },
-  { icon: "ti-chart-bar", text: "98% student pass rate, 3 consecutive years" },
+  { icon: "ti-award", text: "BSc, MS in Microbiology" },
+  { icon: "ti-calendar", text: "15 years teaching O and A Level Biology" },
+  { icon: "ti-certificate", text: "Cambridge trained and certified" },
+  { icon: "ti-school", text: "Senior A Level Biology Faculty, Scholastica Limited, Mirpur" },
+  { icon: "ti-trophy", text: "Several country and world highest in Biology" },
 ];
 
 const stats = [
-  { val: "12+", label: "Years Teaching" },
-  { val: "600+", label: "Students Taught" },
-  { val: "A*", label: "Top Grade Achieved" },
+  { val: "15+", label: "Years Teaching" },
+  { val: "4000+", label: "Students Taught" },
+  { val: "World", label: "Highest in Biology" },
 ];
 
 export default function Instructor() {
@@ -122,8 +123,8 @@ export default function Instructor() {
 
             {/* Name card */}
             <div className={styles.nameCard}>
-              <p className={styles.name}>Mr. Rahman</p>
-              <p className={styles.nameRole}>CAIE Biology Specialist</p>
+              <p className={styles.name}>Abul Hayat Bin Azad (Mr. Tulan)</p>
+              <p className={styles.nameRole}>Senior A Level Biology Faculty — Scholastica Limited, Mirpur</p>
               {/* Stat row */}
               <div className={styles.statRow}>
                 {stats.map((s) => (
