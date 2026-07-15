@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
 import {
   ASSISTANT_EMAIL_DOMAIN,
   getFirebaseAuth,
@@ -87,7 +87,60 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       router.replace("/student");
     } catch (err) {
       const code = (err as { code?: string }).code ?? "";
+      // A pending (not-yet-approved) signup has no auth account — explain why
+      if (code === "auth/invalid-credential" || code === "auth/user-not-found") {
+        try {
+          const pending = await getDocs(
+            query(collection(getFirebaseDb(), "PendingStudents"), where("email", "==", email))
+          );
+          if (!pending.empty) {
+            setError("Your account is awaiting approval. You can sign in once a teacher approves it.");
+            setBusy(false);
+            return;
+          }
+        } catch {
+          // fall through to the generic message
+        }
+      }
       setError(loginErrorMessages[code] ?? `Could not sign in. (${code || (err as Error).message})`);
+      setBusy(false);
+    }
+  };
+
+  const handleSignup = async (name: string, email: string, password: string) => {
+    if (!isFirebaseConfigured) {
+      setError("Signup is temporarily unavailable — please try again later.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const db = getFirebaseDb();
+      const [studentSnap, pendingSnap] = await Promise.all([
+        getDocs(query(collection(db, "Students"), where("email", "==", email))),
+        getDocs(query(collection(db, "PendingStudents"), where("email", "==", email))),
+      ]);
+      if (!studentSnap.empty) {
+        setError("An account with this email already exists — try signing in instead.");
+        setBusy(false);
+        return;
+      }
+      if (!pendingSnap.empty) {
+        setError("A signup with this email is already awaiting approval.");
+        setBusy(false);
+        return;
+      }
+
+      // No auth account yet — the student stays pending until a teacher approves
+      await addDoc(collection(db, "PendingStudents"), {
+        name,
+        email,
+        password,
+        createdAt: serverTimestamp(),
+      });
+      setSubmitted(true);
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      setError(`Could not submit your signup. (${code || (err as Error).message})`);
       setBusy(false);
     }
   };
@@ -118,8 +171,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       return;
     }
 
-    // Signup has no backend yet — acknowledge the submission locally
-    setSubmitted(true);
+    const name = String(data.get("name") ?? "").trim();
+    if (!name) {
+      setError("Enter your full name.");
+      return;
+    }
+    void handleSignup(name, email, password);
   };
 
   return (
@@ -154,11 +211,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               <div className={styles.success} role="status">
                 <i className="ti ti-circle-check" aria-hidden="true" />
                 <div>
-                  <strong>{mode === "login" ? "Signed in!" : "Account created!"}</strong>
+                  <strong>{mode === "login" ? "Signed in!" : "Signup submitted!"}</strong>
                   <p>
                     {mode === "login"
                       ? "Redirecting you to your dashboard…"
-                      : "Check your email to verify your account."}
+                      : "Your account is awaiting approval — you'll be able to sign in once a teacher approves it."}
                   </p>
                 </div>
               </div>
@@ -277,7 +334,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                   className={`btn btn-primary btn-lg ${styles.submitBtn}`}
                   disabled={busy}
                 >
-                  {busy ? "Signing in…" : c.submit}
+                  {busy ? (mode === "login" ? "Signing in…" : "Submitting…") : c.submit}
                   <i className="ti ti-arrow-right" aria-hidden="true" />
                 </button>
               </form>

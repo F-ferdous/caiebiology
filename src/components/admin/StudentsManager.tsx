@@ -20,7 +20,13 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
-import { getFirebaseDb, getSecondaryAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { deleteObject, ref as storageRef } from "firebase/storage";
+import {
+  getFirebaseDb,
+  getFirebaseStorage,
+  getSecondaryAuth,
+  isFirebaseConfigured,
+} from "@/lib/firebase";
 import styles from "./AssistantsManager.module.css";
 import studentStyles from "./StudentsManager.module.css";
 
@@ -43,6 +49,14 @@ type Student = {
   createdAt: Timestamp | null;
 };
 
+type PendingStudent = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  createdAt: Timestamp | null;
+};
+
 type BatchOption = {
   id: string;
   class: string;
@@ -52,11 +66,12 @@ type BatchOption = {
 
 type ModalState =
   | { status: "closed" }
-  | { status: "form"; editing?: Student }
+  | { status: "form"; editing?: Student; pending?: PendingStudent }
   | { status: "busy"; title: string; text: string }
   | { status: "success"; title: string; text: string }
   | { status: "error"; message: string }
-  | { status: "confirm"; student: Student };
+  | { status: "confirm"; student: Student }
+  | { status: "confirmPending"; pending: PendingStudent };
 
 const classOptions = ["IX", "X", "XI", "XII"];
 
@@ -86,12 +101,17 @@ function batchLabelOf(b: BatchOption) {
   return `${b.time} — ${b.location}`;
 }
 
+function requestedOn(t: Timestamp | null) {
+  return t ? t.toDate().toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+}
+
 function OptionalTag() {
   return <span className={studentStyles.optional}>(Optional)</span>;
 }
 
 export default function StudentsManager() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([]);
   const [batches, setBatches] = useState<BatchOption[]>([]);
   const [loadingList, setLoadingList] = useState(isFirebaseConfigured);
   const [modal, setModal] = useState<ModalState>({ status: "closed" });
@@ -116,6 +136,17 @@ export default function StudentsManager() {
     return unsubscribe;
   }, []);
 
+  // Signups awaiting approval — they get an auth account only once approved
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    const q = query(collection(getFirebaseDb(), "PendingStudents"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snap) => {
+      setPendingStudents(
+        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PendingStudent, "id">) }))
+      );
+    });
+  }, []);
+
   // Batches feed the cascading Batch dropdown
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -136,14 +167,18 @@ export default function StudentsManager() {
     });
   };
 
-  const openForm = (editing?: Student) => {
+  const openForm = (editing?: Student, pending?: PendingStudent) => {
     setShowFormPassword(false);
     setFormClass(editing?.class ?? "");
     setFormBatchId(editing?.batchId ?? "");
-    setModal({ status: "form", editing });
+    setModal({ status: "form", editing, pending });
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>, editing?: Student) => {
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>,
+    editing?: Student,
+    pending?: PendingStudent
+  ) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
@@ -229,9 +264,14 @@ export default function StudentsManager() {
       // The secondary app is now signed in as the new student — clean up
       await signOut(secondaryAuth);
 
+      // Approved signups leave the pending queue
+      if (pending) {
+        await deleteDoc(doc(db, "PendingStudents", pending.id));
+      }
+
       setModal({
         status: "success",
-        title: "Student created",
+        title: pending ? "Student approved" : "Student created",
         text: `${name} can now sign in with their email and password.`,
       });
     } catch (err) {
@@ -252,6 +292,8 @@ export default function StudentsManager() {
         // Auth account left behind — surfaced in the console for manual cleanup
         console.warn(`Could not delete auth account for ${s.email}; remove it in Firebase Console.`);
       }
+      // Profile picture lives at a fixed per-student path; ignore if none was uploaded
+      await deleteObject(storageRef(getFirebaseStorage(), `student-avatars/${s.id}`)).catch(() => {});
       await deleteDoc(doc(getFirebaseDb(), "Students", s.id));
       setModal({
         status: "success",
@@ -263,7 +305,22 @@ export default function StudentsManager() {
     }
   };
 
+  const handleDeletePending = async (p: PendingStudent) => {
+    setModal({ status: "busy", title: "Deleting…", text: `Removing ${p.name}'s signup request.` });
+    try {
+      await deleteDoc(doc(getFirebaseDb(), "PendingStudents", p.id));
+      setModal({
+        status: "success",
+        title: "Request deleted",
+        text: `${p.name}'s signup request has been removed.`,
+      });
+    } catch (err) {
+      setModal({ status: "error", message: errorMessage(err, "Could not delete the request.") });
+    }
+  };
+
   const editing = modal.status === "form" ? modal.editing : undefined;
+  const pending = modal.status === "form" ? modal.pending : undefined;
 
   return (
     <div className={styles.wrap}>
@@ -295,6 +352,69 @@ export default function StudentsManager() {
           </div>
         </div>
       )}
+
+      {/* ---- Pending signups ---- */}
+      <section className={styles.panel} aria-labelledby="pending-list-title">
+        <div className={styles.panelHeader}>
+          <h2 id="pending-list-title" className={styles.panelTitle}>Pending Students</h2>
+          <span className="badge badge-default">{pendingStudents.length}</span>
+        </div>
+
+        {pendingStudents.length === 0 ? (
+          <div className={styles.empty}>
+            <i className="ti ti-user-check" aria-hidden="true" />
+            <p className={styles.emptyText}>
+              No pending signups — new registrations from the signup page will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Requested</th>
+                  <th className={styles.actionsHead}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingStudents.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <span className={styles.nameCell}>
+                        <span className={styles.avatar} aria-hidden="true">{initials(p.name)}</span>
+                        {p.name}
+                      </span>
+                    </td>
+                    <td>{p.email}</td>
+                    <td>{requestedOn(p.createdAt)}</td>
+                    <td>
+                      <span className={styles.actions}>
+                        <button
+                          type="button"
+                          className={`btn btn-primary ${studentStyles.approveBtn}`}
+                          onClick={() => openForm(undefined, p)}
+                        >
+                          <i className="ti ti-check" aria-hidden="true" /> Approve
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                          aria-label={`Delete ${p.name}'s signup request`}
+                          onClick={() => setModal({ status: "confirmPending", pending: p })}
+                        >
+                          <i className="ti ti-trash" aria-hidden="true" />
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {/* ---- Student list ---- */}
       <section className={styles.panel} aria-labelledby="student-list-title">
@@ -395,7 +515,7 @@ export default function StudentsManager() {
             <div className={`${styles.modal} ${styles.modalWide} ${studentStyles.modalWider}`}>
               <div className={styles.modalHeader}>
                 <h3 className={styles.modalTitle}>
-                  {editing ? "Edit Student" : "Add Student"}
+                  {editing ? "Edit Student" : pending ? "Approve Student" : "Add Student"}
                 </h3>
                 <button
                   type="button"
@@ -408,15 +528,15 @@ export default function StudentsManager() {
               </div>
 
               <form
-                key={editing?.id ?? "new"}
+                key={editing?.id ?? pending?.id ?? "new"}
                 className={studentStyles.formGrid}
-                onSubmit={(e) => handleSubmit(e, editing)}
+                onSubmit={(e) => handleSubmit(e, editing, pending)}
               >
                 <div className={`${styles.field} ${studentStyles.spanFull}`}>
                   <label className={styles.label} htmlFor="student-name">Name</label>
                   <input className={styles.input} id="student-name" name="name" type="text"
                     placeholder="Student's full name" required autoComplete="off"
-                    defaultValue={editing?.name} />
+                    defaultValue={editing?.name ?? pending?.name} />
                 </div>
 
                 <div className={styles.field}>
@@ -458,7 +578,7 @@ export default function StudentsManager() {
                   <label className={styles.label} htmlFor="student-email">Email</label>
                   <input className={styles.input} id="student-email" name="email" type="email"
                     placeholder="student@example.com" required autoComplete="off"
-                    defaultValue={editing?.email} disabled={!!editing} />
+                    defaultValue={editing?.email ?? pending?.email} disabled={!!editing} />
                   <p className={styles.hint}>
                     {editing
                       ? "Email can't be changed."
@@ -479,7 +599,7 @@ export default function StudentsManager() {
                     <input className={styles.input} id="student-password" name="password"
                       type={showFormPassword ? "text" : "password"}
                       placeholder="At least 6 characters" required minLength={6}
-                      autoComplete="new-password" defaultValue={editing?.password} />
+                      autoComplete="new-password" defaultValue={editing?.password ?? pending?.password} />
                     <button type="button" className={styles.eyeBtn}
                       aria-label={showFormPassword ? "Hide password" : "Show password"}
                       onClick={() => setShowFormPassword((v) => !v)}>
@@ -543,8 +663,8 @@ export default function StudentsManager() {
                 </div>
 
                 <button type="submit" className={`btn btn-primary ${studentStyles.spanFull}`}>
-                  <i className={`ti ${editing ? "ti-device-floppy" : "ti-user-plus"}`} aria-hidden="true" />
-                  {editing ? "Save Changes" : "Save Student"}
+                  <i className={`ti ${editing ? "ti-device-floppy" : pending ? "ti-user-check" : "ti-user-plus"}`} aria-hidden="true" />
+                  {editing ? "Save Changes" : pending ? "Approve & Create Account" : "Save Student"}
                 </button>
               </form>
             </div>
@@ -563,6 +683,25 @@ export default function StudentsManager() {
                   Cancel
                 </button>
                 <button className={`btn ${styles.btnDanger}`} onClick={() => handleDelete(modal.student)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ) : modal.status === "confirmPending" ? (
+            <div className={styles.modal}>
+              <div className={`${styles.modalIcon} ${styles.modalIconError}`} aria-hidden="true">
+                <i className="ti ti-trash" />
+              </div>
+              <h3 className={styles.modalTitle}>Delete signup request?</h3>
+              <p className={styles.modalText}>
+                <strong>{modal.pending.name}</strong> ({modal.pending.email})&apos;s signup request
+                will be removed. They can register again later. This can&apos;t be undone.
+              </p>
+              <div className={styles.modalActions}>
+                <button className="btn btn-secondary" onClick={() => setModal({ status: "closed" })}>
+                  Cancel
+                </button>
+                <button className={`btn ${styles.btnDanger}`} onClick={() => handleDeletePending(modal.pending)}>
                   Delete
                 </button>
               </div>
