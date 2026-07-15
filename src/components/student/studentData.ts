@@ -16,6 +16,8 @@ export type StudentRecord = {
   fathersPhone: string;
   address: string;
   school: string;
+  /** Firebase Storage download URL — uploaded from the student profile tab. */
+  photoURL?: string;
   createdAt: Timestamp | null;
 };
 

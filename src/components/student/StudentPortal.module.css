@@ -169,6 +169,11 @@ a.item:hover {
     border-color var(--duration-slow) var(--ease-out);
 }
 
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .profileAvatar {
   flex-shrink: 0;
   width: 56px;
@@ -183,6 +188,94 @@ a.item:hover {
   font-family: var(--font-serif);
   font-size: 1.2rem;
   font-weight: 700;
+  overflow: hidden;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarEditBtn {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-circle);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg-card);
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.avatarEditBtn:hover {
+  color: var(--theme-text-primary);
+  border-color: var(--red-100);
+}
+
+.avatarEditBtn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.avatarEditBtn .ti {
+  font-size: 12px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.spinning {
+  display: inline-block;
+  animation: profileSpin 0.8s linear infinite;
+}
+
+@keyframes profileSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Inline status + edit form ---- */
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status .ti {
+  font-size: 14px;
+}
+
+.statusError {
+  color: var(--red-500, #d33);
+}
+
+.statusSuccess {
+  color: var(--green-600, #2e7d4f);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 .profileName {
