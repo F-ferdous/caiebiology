@@ -35,7 +35,6 @@ type Payment = {
 
 type StudentOption = {
   id: string;
-  uid: string;
   name: string;
   class: string;
   batchId: string;
@@ -227,7 +226,6 @@ export default function PaymentsManager() {
       }
       await addDoc(collection(db, "Payments"), {
         studentId: selected.id,
-        uid: selected.uid,
         studentName: selected.name,
         class: selected.class,
         batchId: selected.batchId,
