@@ -2,29 +2,23 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updatePassword,
-  signOut,
-} from "firebase/auth";
-import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
+  where,
   Timestamp,
 } from "firebase/firestore";
 import { deleteObject, ref as storageRef } from "firebase/storage";
 import {
-  getFirebaseAuth,
   getFirebaseDb,
   getFirebaseStorage,
-  getSecondaryAuth,
   isFirebaseConfigured,
 } from "@/lib/firebase";
 import styles from "./AssistantsManager.module.css";
@@ -32,7 +26,6 @@ import studentStyles from "./StudentsManager.module.css";
 
 type Student = {
   id: string;
-  uid: string;
   name: string;
   class: string;
   batchId: string;
@@ -218,17 +211,7 @@ export default function StudentsManager() {
     if (editing) {
       setModal({ status: "busy", title: "Saving…", text: "Updating the student's details." });
       try {
-        // Password change requires re-authenticating as the student
-        if (password !== editing.password) {
-          const secondaryAuth = getSecondaryAuth();
-          const cred = await signInWithEmailAndPassword(
-            secondaryAuth,
-            editing.email,
-            editing.password
-          );
-          await updatePassword(cred.user, password);
-          await signOut(secondaryAuth);
-        }
+        // Password lives in the record, so a plain updateDoc saves any change.
         await updateDoc(doc(db, "Students", editing.id), record);
         setModal({
           status: "success",
@@ -244,25 +227,25 @@ export default function StudentsManager() {
     setModal({
       status: "busy",
       title: "Creating…",
-      text: "Setting up the account and saving the student's details.",
+      text: "Saving the student's details.",
     });
     try {
-      const secondaryAuth = getSecondaryAuth();
+      // Students authenticate against Firestore (email + password), so email is
+      // the login id — enforce uniqueness ourselves (Firebase Auth used to).
+      const clash = await getDocs(
+        query(collection(db, "Students"), where("email", "==", email))
+      );
+      if (!clash.empty) {
+        setModal({ status: "error", message: "A student with this email already exists." });
+        return;
+      }
 
-      // 1. Create the Firebase Auth user (email & password)
-      const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-
-      // 2. Store the student record in Firestore
       await addDoc(collection(db, "Students"), {
-        uid: credential.user.uid,
         email,
         ...record,
         role: "student",
         createdAt: serverTimestamp(),
       });
-
-      // The secondary app is now signed in as the new student — clean up
-      await signOut(secondaryAuth);
 
       // Approved signups leave the pending queue
       if (pending) {
@@ -282,27 +265,8 @@ export default function StudentsManager() {
   const handleDelete = async (s: Student) => {
     setModal({ status: "busy", title: "Deleting…", text: `Removing ${s.name}'s account and data.` });
     try {
-      // Delete the Auth account server-side via the Admin SDK, keyed on uid —
-      // reliable and password-independent. The route authenticates the caller by
-      // their Firebase ID token. If this fails we stop here and leave the
-      // Firestore record in place so the two never drift out of sync.
-      if (s.uid) {
-        const currentUser = getFirebaseAuth().currentUser;
-        if (!currentUser) throw new Error("Your session has expired — sign in again.");
-        const idToken = await currentUser.getIdToken();
-        const res = await fetch("/api/students/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({ uid: s.uid }),
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error || `Auth account deletion failed (${res.status}).`);
-        }
-      }
+      // No Firebase Auth account to clean up — the student lives entirely in
+      // Firestore. Remove the avatar (if any) and the record.
       // Profile picture lives at a fixed per-student path; ignore if none was uploaded
       await deleteObject(storageRef(getFirebaseStorage(), `student-avatars/${s.id}`)).catch(() => {});
       await deleteDoc(doc(getFirebaseDb(), "Students", s.id));

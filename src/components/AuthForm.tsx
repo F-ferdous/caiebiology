@@ -3,14 +3,9 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
-import {
-  ASSISTANT_EMAIL_DOMAIN,
-  getFirebaseAuth,
-  getFirebaseDb,
-  isFirebaseConfigured,
-} from "@/lib/firebase";
+import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
+import { setStudentSession } from "@/lib/studentAuth";
 import styles from "./AuthForm.module.css";
 
 type Mode = "login" | "signup";
@@ -40,14 +35,6 @@ const panelPoints = [
   { icon: "ti-sparkles", text: "AI tutor, available 24/7" },
 ];
 
-const loginErrorMessages: Record<string, string> = {
-  "auth/invalid-credential": "Incorrect email or password.",
-  "auth/wrong-password": "Incorrect email or password.",
-  "auth/user-not-found": "No account found with this email.",
-  "auth/too-many-requests": "Too many attempts — please wait a moment and try again.",
-  "auth/network-request-failed": "Network error — check your connection and try again.",
-};
-
 export default function AuthForm({ mode }: { mode: Mode }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,46 +50,40 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
     setBusy(true);
     try {
-      const auth = getFirebaseAuth();
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-
-      // Assistants use synthetic emails — send them to their own portal
-      if (credential.user.email?.endsWith(`@${ASSISTANT_EMAIL_DOMAIN}`)) {
-        router.replace("/assistant");
-        return;
-      }
-
-      // Only enrolled students may enter the student dashboard
+      const db = getFirebaseDb();
+      // Students authenticate against the Firestore "Students" collection —
+      // match the email, then check the stored password. (Staff use the
+      // /admin and /assistant portals, which sign in with Firebase Auth.)
       const snap = await getDocs(
-        query(collection(getFirebaseDb(), "Students"), where("uid", "==", credential.user.uid))
+        query(collection(db, "Students"), where("email", "==", email))
       );
+
       if (snap.empty) {
-        await signOut(auth);
-        setError("No student account found for this email. Contact your teacher to get enrolled.");
+        // A pending (not-yet-approved) signup has no student record yet
+        const pending = await getDocs(
+          query(collection(db, "PendingStudents"), where("email", "==", email))
+        );
+        setError(
+          pending.empty
+            ? "No student account found for this email. Contact your teacher to get enrolled."
+            : "Your account is awaiting approval. You can sign in once a teacher approves it."
+        );
         setBusy(false);
         return;
       }
 
+      const student = snap.docs[0];
+      if ((student.data() as { password?: string }).password !== password) {
+        setError("Incorrect email or password.");
+        setBusy(false);
+        return;
+      }
+
+      setStudentSession(student.id);
       setSubmitted(true);
       router.replace("/student");
     } catch (err) {
-      const code = (err as { code?: string }).code ?? "";
-      // A pending (not-yet-approved) signup has no auth account — explain why
-      if (code === "auth/invalid-credential" || code === "auth/user-not-found") {
-        try {
-          const pending = await getDocs(
-            query(collection(getFirebaseDb(), "PendingStudents"), where("email", "==", email))
-          );
-          if (!pending.empty) {
-            setError("Your account is awaiting approval. You can sign in once a teacher approves it.");
-            setBusy(false);
-            return;
-          }
-        } catch {
-          // fall through to the generic message
-        }
-      }
-      setError(loginErrorMessages[code] ?? `Could not sign in. (${code || (err as Error).message})`);
+      setError(`Could not sign in. (${(err as Error).message})`);
       setBusy(false);
     }
   };

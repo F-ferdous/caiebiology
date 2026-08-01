@@ -1,6 +1,5 @@
 # Firebase App Hosting configuration.
-# Non-secret values live here; the service-account private key is stored in
-# Cloud Secret Manager (secret: firebase-admin-private-key) and referenced below.
+# The Firebase web config is public by design (it ships in the client bundle).
 
 runConfig:
   minInstances: 0
@@ -35,16 +34,4 @@ env:
     value: "1:361372107177:web:1c38176250e1c8810504b8"
     availability:
       - BUILD
-      - RUNTIME
-  - variable: FIREBASE_ADMIN_PROJECT_ID
-    value: "caie-biology"
-    availability:
-      - RUNTIME
-  - variable: FIREBASE_ADMIN_CLIENT_EMAIL
-    value: "firebase-adminsdk-fbsvc@caie-biology.iam.gserviceaccount.com"
-    availability:
-      - RUNTIME
-  - variable: FIREBASE_ADMIN_PRIVATE_KEY
-    secret: firebase-admin-private-key
-    availability:
       - RUNTIME

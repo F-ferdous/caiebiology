@@ -2,14 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import {
-  ASSISTANT_EMAIL_DOMAIN,
-  getFirebaseAuth,
-  getFirebaseDb,
-  isFirebaseConfigured,
-} from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
+import { clearStudentSession, getStudentSession } from "@/lib/studentAuth";
 import PanelShell, { type PanelNavItem } from "../admin/PanelShell";
 import { type StudentRecord } from "./studentData";
 
@@ -38,42 +33,31 @@ export default function StudentShell({ children }: { children: React.ReactNode }
       router.replace("/login");
       return;
     }
-    let unsubStudent: (() => void) | undefined;
-    const unsubAuth = onAuthStateChanged(getFirebaseAuth(), (user) => {
-      unsubStudent?.();
-      unsubStudent = undefined;
-
-      // Assistants sign in with synthetic emails — they belong in /assistant
-      if (!user?.email || user.email.endsWith(`@${ASSISTANT_EMAIL_DOMAIN}`)) {
-        setStudent(null);
-        router.replace("/login");
-        return;
-      }
-
-      const q = query(
-        collection(getFirebaseDb(), "Students"),
-        where("uid", "==", user.uid)
-      );
-      unsubStudent = onSnapshot(q, (snap) => {
-        if (snap.empty) {
-          // Authenticated but not enrolled — no student record to show
-          signOut(getFirebaseAuth());
+    const id = getStudentSession();
+    if (!id) {
+      router.replace("/login");
+      return;
+    }
+    // Live-follow the signed-in student's own record by its doc id.
+    const unsub = onSnapshot(
+      doc(getFirebaseDb(), "Students", id),
+      (snap) => {
+        if (!snap.exists()) {
+          // Record deleted (or a stale session) — sign out
+          clearStudentSession();
           setStudent(null);
           router.replace("/login");
           return;
         }
-        const d = snap.docs[0];
-        setStudent({ id: d.id, ...(d.data() as Omit<StudentRecord, "id">) });
-      });
-    });
-    return () => {
-      unsubStudent?.();
-      unsubAuth();
-    };
+        setStudent({ id: snap.id, ...(snap.data() as Omit<StudentRecord, "id">) });
+      },
+      () => router.replace("/login")
+    );
+    return unsub;
   }, [router]);
 
-  const handleLogout = async () => {
-    await signOut(getFirebaseAuth());
+  const handleLogout = () => {
+    clearStudentSession();
     router.replace("/login");
   };
 
