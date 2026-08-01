@@ -3,30 +3,49 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ADMIN_SESSION_KEY, verifyAdmin } from "@/lib/adminAuth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { adminEmail } from "@/lib/adminAuth";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import formStyles from "../AuthForm.module.css";
 import styles from "./AdminLogin.module.css";
+
+const loginErrorMessages: Record<string, string> = {
+  "auth/invalid-credential": "Invalid admin ID or password.",
+  "auth/user-not-found": "Invalid admin ID or password.",
+  "auth/wrong-password": "Invalid admin ID or password.",
+  "auth/too-many-requests": "Too many attempts — try again in a few minutes.",
+  "auth/network-request-failed": "Network error — check your connection and try again.",
+};
 
 export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    if (!isFirebaseConfigured) {
+      setError("Firebase is not configured — contact the administrator.");
+      return;
+    }
 
     const data = new FormData(e.currentTarget);
     const id = String(data.get("adminId") ?? "").trim();
     const password = String(data.get("password") ?? "");
 
-    if (!verifyAdmin(id, password)) {
-      setError("Invalid admin ID or password.");
-      return;
+    setBusy(true);
+    try {
+      // Short id ("admin") → synthetic email (admin@caiebiology.com).
+      await signInWithEmailAndPassword(getFirebaseAuth(), adminEmail(id), password);
+      router.replace("/admin");
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      setError(loginErrorMessages[code] ?? `Could not sign in. (${code})`);
+      setBusy(false);
     }
-
-    sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
-    router.replace("/admin");
   };
 
   return (
@@ -91,9 +110,13 @@ export default function AdminLogin() {
               </div>
             )}
 
-            <button type="submit" className={`btn btn-primary btn-lg ${formStyles.submitBtn}`}>
-              Sign In to Console
-              <i className="ti ti-arrow-right" aria-hidden="true" />
+            <button
+              type="submit"
+              className={`btn btn-primary btn-lg ${formStyles.submitBtn}`}
+              disabled={busy}
+            >
+              {busy ? "Signing in…" : "Sign In to Console"}
+              {!busy && <i className="ti ti-arrow-right" aria-hidden="true" />}
             </button>
           </form>
 

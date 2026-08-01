@@ -5,7 +5,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updatePassword,
-  deleteUser,
   signOut,
 } from "firebase/auth";
 import {
@@ -22,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { deleteObject, ref as storageRef } from "firebase/storage";
 import {
+  getFirebaseAuth,
   getFirebaseDb,
   getFirebaseStorage,
   getSecondaryAuth,
@@ -282,15 +282,26 @@ export default function StudentsManager() {
   const handleDelete = async (s: Student) => {
     setModal({ status: "busy", title: "Deleting…", text: `Removing ${s.name}'s account and data.` });
     try {
-      // Remove the Auth account — requires signing in as the student.
-      // If credentials are stale this fails; the Firestore record is removed regardless.
-      try {
-        const secondaryAuth = getSecondaryAuth();
-        const cred = await signInWithEmailAndPassword(secondaryAuth, s.email, s.password);
-        await deleteUser(cred.user);
-      } catch {
-        // Auth account left behind — surfaced in the console for manual cleanup
-        console.warn(`Could not delete auth account for ${s.email}; remove it in Firebase Console.`);
+      // Delete the Auth account server-side via the Admin SDK, keyed on uid —
+      // reliable and password-independent. The route authenticates the caller by
+      // their Firebase ID token. If this fails we stop here and leave the
+      // Firestore record in place so the two never drift out of sync.
+      if (s.uid) {
+        const currentUser = getFirebaseAuth().currentUser;
+        if (!currentUser) throw new Error("Your session has expired — sign in again.");
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch("/api/students/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ uid: s.uid }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error || `Auth account deletion failed (${res.status}).`);
+        }
       }
       // Profile picture lives at a fixed per-student path; ignore if none was uploaded
       await deleteObject(storageRef(getFirebaseStorage(), `student-avatars/${s.id}`)).catch(() => {});

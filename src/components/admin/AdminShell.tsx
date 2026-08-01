@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ADMIN_SESSION_KEY } from "@/lib/adminAuth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { isAdminEmail } from "@/lib/adminAuth";
+import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { adminSections } from "@/lib/adminNav";
 import PanelShell, { type PanelNavItem } from "./PanelShell";
 
@@ -20,15 +22,22 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   useEffect(() => {
-    if (sessionStorage.getItem(ADMIN_SESSION_KEY) !== "1") {
+    if (!isFirebaseConfigured) {
       router.replace("/admin/login");
-    } else {
-      setAuthed(true);
+      return;
     }
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (user) => {
+      if (isAdminEmail(user?.email)) {
+        setAuthed(true);
+      } else {
+        router.replace("/admin/login");
+      }
+    });
+    return unsubscribe;
   }, [router]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  const handleLogout = async () => {
+    await signOut(getFirebaseAuth());
     router.replace("/admin/login");
   };
 

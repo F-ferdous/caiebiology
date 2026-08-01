@@ -1,10 +1,16 @@
-// Demo-only client-side auth — replace with a real backend (API route +
-// hashed credentials + httpOnly session cookie) before production.
-export const ADMIN_SESSION_KEY = "caie-admin-session";
+// Admin now authenticates against Firebase Auth (real session), signing in with
+// a short id that maps to a synthetic email — same trick as assistants use.
+// The admin types id "admin"; under the hood that's admin@caiebiology.com.
+export const ADMIN_EMAIL_DOMAIN = "caiebiology.com";
 
-const ADMIN_ID = "admin";
-const ADMIN_PASSWORD = "caie-admin-2026";
+export function adminEmail(id: string): string {
+  return `${id.trim().toLowerCase()}@${ADMIN_EMAIL_DOMAIN}`;
+}
 
-export function verifyAdmin(id: string, password: string): boolean {
-  return id === ADMIN_ID && password === ADMIN_PASSWORD;
+/** The single admin account. Login and the panel guard both key off this. */
+export const ADMIN_ID = "admin";
+export const ADMIN_EMAIL = adminEmail(ADMIN_ID);
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return email === ADMIN_EMAIL;
 }
