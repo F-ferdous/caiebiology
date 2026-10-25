@@ -10,6 +10,7 @@ import {
   type NotifyRecord,
 } from "@/lib/notify";
 import { useStudent } from "../student/studentContext";
+import InstallGuide from "../pwa/InstallGuide";
 import adminStyles from "../admin/AdminDashboard.module.css";
 import styles from "../student/StudentPortal.module.css";
 
@@ -64,6 +65,16 @@ export default function ParentNotices() {
           </p>
         </div>
       </header>
+
+      <InstallGuide
+        owner={{
+          role: "parent",
+          studentId: child.id,
+          class: child.class,
+          batchId: child.batchId,
+          name: child.name,
+        }}
+      />
 
       <section className={adminStyles.panel} aria-labelledby="notices-title">
         <div className={adminStyles.panelHeader}>

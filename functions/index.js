@@ -6,11 +6,14 @@
  * collection — via src/lib/notify.ts `queueNotification()` — and this function
  * fans it out to the matching students' devices over FCM Web Push.
  *
+ * Recipients are students AND their parents — a parent's PushToken carries the
+ * child's studentId/class/batchId, so the same targeting reaches both.
+ *
  * Targeting (field `target` on the doc):
- *   all     → every student with notifications on
- *   class   → students whose `class` matches
- *   batch   → students in `batchId`
- *   student → the single `studentId`
+ *   all     → every student/parent with notifications on
+ *   class   → those whose `class` matches
+ *   batch   → those in `batchId`
+ *   student → the one `studentId` (student + their parents)
  *
  * Messages are sent data-only so the client service worker
  * (public/firebase-messaging-sw.js) builds the visible notification — avoids a
@@ -49,23 +52,35 @@ exports.sendNotification = onDocumentCreated("Notifications/{id}", async (event)
   const type = (n.type || "announcement").toString();
   const url = (n.url || "/student/notices").toString();
 
-  // Find the students this notification is aimed at. All queries are
-  // equality-only, so no composite index is required.
-  let q = db.collection("PushTokens").where("role", "==", "student");
-  if (target === "class") {
-    if (!n.class) return logger.warn("class notification with no class", { id: event.params.id });
-    q = q.where("class", "==", n.class);
-  } else if (target === "batch") {
-    if (!n.batchId) return logger.warn("batch notification with no batchId", { id: event.params.id });
-    q = q.where("batchId", "==", n.batchId);
-  } else if (target === "student") {
-    if (!n.studentId) return logger.warn("student notification with no studentId", { id: event.params.id });
-    q = q.where("studentId", "==", n.studentId);
-  } else if (target !== "all") {
+  // Narrow a PushTokens query to the notification's audience. Equality-only, so
+  // no composite index is required.
+  const applyTarget = (base) => {
+    if (target === "class") return base.where("class", "==", n.class);
+    if (target === "batch") return base.where("batchId", "==", n.batchId);
+    if (target === "student") return base.where("studentId", "==", n.studentId);
+    return base; // "all"
+  };
+
+  if (target === "class" && !n.class) {
+    return logger.warn("class notification with no class", { id: event.params.id });
+  }
+  if (target === "batch" && !n.batchId) {
+    return logger.warn("batch notification with no batchId", { id: event.params.id });
+  }
+  if (target === "student" && !n.studentId) {
+    return logger.warn("student notification with no studentId", { id: event.params.id });
+  }
+  if (!["all", "class", "batch", "student"].includes(target)) {
     return logger.warn("unknown notification target", { target });
   }
 
-  const tokenDocs = (await q.get()).docs;
+  // Both students and their parents receive the alert.
+  const tokens = db.collection("PushTokens");
+  const [studentDocs, parentDocs] = await Promise.all([
+    applyTarget(tokens.where("role", "==", "student")).get(),
+    applyTarget(tokens.where("role", "==", "parent")).get(),
+  ]);
+  const tokenDocs = [...studentDocs.docs, ...parentDocs.docs];
   if (tokenDocs.length === 0) {
     return logger.info("no matching push tokens", { id: event.params.id, target, type });
   }

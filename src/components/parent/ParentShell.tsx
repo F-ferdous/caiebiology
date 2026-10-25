@@ -5,17 +5,16 @@ import { useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { clearParentSession, getParentSession, type ParentKind } from "@/lib/parentAuth";
+import { disablePush } from "@/lib/push";
 import PanelShell, { type PanelNavItem } from "../admin/PanelShell";
 import { StudentContext } from "../student/studentContext";
 import { type StudentRecord } from "../student/studentData";
 
 const navItems: PanelNavItem[] = [
-  { href: "/parent", label: "Dashboard", icon: "ti-layout-dashboard" },
-  { href: "/parent/notices", label: "Notices", icon: "ti-speakerphone" },
-  { href: "/parent/profile", label: "Child's Profile", icon: "ti-user-circle" },
+  { href: "/parent", label: "Notices", icon: "ti-speakerphone" },
   { href: "/parent/tests", label: "Tests & Quizzes", icon: "ti-clipboard-check" },
+  { href: "/parent/marks", label: "Marks", icon: "ti-report-analytics" },
   { href: "/parent/payments", label: "Payment Info", icon: "ti-credit-card" },
-  { href: "/parent/resources", label: "Resources", icon: "ti-books" },
 ];
 
 // Which parent signed in — exposed so the dashboard can greet them.
@@ -59,6 +58,9 @@ export default function ParentShell({ children }: { children: React.ReactNode })
   }, [router]);
 
   const handleLogout = () => {
+    // Forget this device's push token so a shared device stops getting the
+    // child's notices after the parent signs out.
+    void disablePush();
     clearParentSession();
     router.replace("/parent/login");
   };

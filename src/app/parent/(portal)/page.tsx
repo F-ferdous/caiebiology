@@ -1,5 +1,5 @@
-import ParentDashboard from "@/components/parent/ParentDashboard";
+import ParentNotices from "@/components/parent/ParentNotices";
 
 export default function ParentHomePage() {
-  return <ParentDashboard />;
+  return <ParentNotices />;
 }

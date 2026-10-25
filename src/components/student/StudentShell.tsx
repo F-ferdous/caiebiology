@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { clearStudentSession, getStudentSession } from "@/lib/studentAuth";
+import { getParentSession } from "@/lib/parentAuth";
 import { disablePush } from "@/lib/push";
 import PanelShell, { type PanelNavItem } from "../admin/PanelShell";
 import { type StudentRecord } from "./studentData";
@@ -34,6 +35,18 @@ export default function StudentShell({ children }: { children: React.ReactNode }
     }
     const id = getStudentSession();
     if (!id) {
+      // A parent who tapped a push notification lands on a /student/* URL —
+      // send them to the matching page in their own portal instead of /login.
+      if (getParentSession()) {
+        const path = typeof window !== "undefined" ? window.location.pathname : "";
+        const dest = path.includes("/tests")
+          ? "/parent/tests"
+          : path.includes("/payments")
+            ? "/parent/payments"
+            : "/parent";
+        router.replace(dest);
+        return;
+      }
       router.replace("/login");
       return;
     }

@@ -14,7 +14,7 @@ import {
   VAPID_KEY,
 } from "./firebase";
 
-export type PushRole = "student" | "admin" | "assistant";
+export type PushRole = "student" | "parent" | "admin" | "assistant";
 
 /** Who a token belongs to — class/batch let the sender target students. */
 export type PushOwner = {
