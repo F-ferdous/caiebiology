@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "../ThemeProvider";
+import PushToaster from "../pwa/PushToaster";
 import styles from "./AdminShell.module.css";
 
 export type PanelNavItem = { href: string; label: string; icon: string };
@@ -120,6 +121,8 @@ export default function PanelShell({
           {children}
         </main>
       </div>
+
+      <PushToaster />
     </div>
   );
 }

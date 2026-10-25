@@ -21,12 +21,19 @@ import {
   getFirebaseStorage,
   isFirebaseConfigured,
 } from "@/lib/firebase";
+import {
+  DEFAULT_ASSISTANT_PERMISSIONS,
+  subscribeAssistantPermissions,
+} from "@/lib/assistantPermissions";
+import type { PanelRole } from "@/lib/panelRole";
+import StudentDetailsModal from "./StudentDetailsModal";
 import styles from "./AssistantsManager.module.css";
 import studentStyles from "./StudentsManager.module.css";
 
 type Student = {
   id: string;
   name: string;
+  studentId: string;
   class: string;
   batchId: string;
   batchLabel: string;
@@ -47,6 +54,19 @@ type PendingStudent = {
   name: string;
   email: string;
   password: string;
+  // Optional: signups made before the full form existed only carry name/email/
+  // password. Newer signups carry the whole enrollment record.
+  studentId?: string;
+  class?: string;
+  batchId?: string;
+  batchLabel?: string;
+  mobile?: string;
+  fathersName?: string;
+  fathersPhone?: string;
+  mothersName?: string;
+  mothersPhone?: string;
+  address?: string;
+  school?: string;
   createdAt: Timestamp | null;
 };
 
@@ -64,9 +84,11 @@ type ModalState =
   | { status: "success"; title: string; text: string }
   | { status: "error"; message: string }
   | { status: "confirm"; student: Student }
-  | { status: "confirmPending"; pending: PendingStudent };
+  | { status: "confirmPending"; pending: PendingStudent }
+  | { status: "details"; student: Student };
 
 const classOptions = ["IX", "X", "XI", "XII"];
+const locationOptions = ["Mirpur", "Gulshan", "Lalmatia"];
 
 const firebaseErrorMessages: Record<string, string> = {
   "auth/email-already-in-use": "An account with this email already exists.",
@@ -102,17 +124,27 @@ function OptionalTag() {
   return <span className={studentStyles.optional}>(Optional)</span>;
 }
 
-export default function StudentsManager() {
+export default function StudentsManager({ role = "admin" }: { role?: PanelRole }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([]);
   const [batches, setBatches] = useState<BatchOption[]>([]);
   const [loadingList, setLoadingList] = useState(isFirebaseConfigured);
+  // Admins always delete; assistants only when the admin has granted it.
+  const [canDelete, setCanDelete] = useState(
+    role === "admin" ? true : DEFAULT_ASSISTANT_PERMISSIONS.canDeleteStudents
+  );
   const [modal, setModal] = useState<ModalState>({ status: "closed" });
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [showFormPassword, setShowFormPassword] = useState(false);
   // Controlled so the Batch dropdown can cascade from the selected class
   const [formClass, setFormClass] = useState("");
   const [formBatchId, setFormBatchId] = useState("");
+  // List controls: search, filters, pagination
+  const [search, setSearch] = useState("");
+  const [filterClass, setFilterClass] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(1);
 
   // Live student list from Firestore
   useEffect(() => {
@@ -149,7 +181,51 @@ export default function StudentsManager() {
     });
   }, []);
 
+  // Assistants read the delete permission live so an admin toggle applies at once
+  useEffect(() => {
+    if (role === "admin" || !isFirebaseConfigured) return;
+    return subscribeAssistantPermissions((perms) =>
+      setCanDelete(perms.canDeleteStudents)
+    );
+  }, [role]);
+
   const classBatches = batches.filter((b) => b.class === formClass);
+
+  // A student's location is the first word of their batch's location field
+  // (e.g. "Mirpur campus, Room 3" → "Mirpur"). Resolve it from the live batch,
+  // falling back to the tail of the stored "time — location" label.
+  const locationOf = (s: Student) => {
+    const b = batches.find((bb) => bb.id === s.batchId);
+    const loc = b?.location ?? (() => {
+      const idx = s.batchLabel.lastIndexOf("—");
+      return idx >= 0 ? s.batchLabel.slice(idx + 1) : s.batchLabel;
+    })();
+    return loc.trim().split(/\s+/)[0] ?? "";
+  };
+
+  const q = search.trim().toLowerCase();
+  const filteredStudents = students.filter((s) => {
+    if (filterClass && s.class !== filterClass) return false;
+    if (filterLocation && locationOf(s).toLowerCase() !== filterLocation.toLowerCase()) return false;
+    if (q) {
+      const hay = [s.name, s.email, s.studentId, s.mobile]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageStudents = filteredStudents.slice(pageStart, pageStart + pageSize);
+
+  // Any change to the query, filters, or page size returns to the first page.
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterClass, filterLocation, pageSize]);
 
   const togglePassword = (id: string) => {
     setVisiblePasswords((prev) => {
@@ -162,8 +238,8 @@ export default function StudentsManager() {
 
   const openForm = (editing?: Student, pending?: PendingStudent) => {
     setShowFormPassword(false);
-    setFormClass(editing?.class ?? "");
-    setFormBatchId(editing?.batchId ?? "");
+    setFormClass(editing?.class ?? pending?.class ?? "");
+    setFormBatchId(editing?.batchId ?? pending?.batchId ?? "");
     setModal({ status: "form", editing, pending });
   };
 
@@ -175,6 +251,7 @@ export default function StudentsManager() {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
+    const studentId = String(data.get("studentId") ?? "").trim();
     const email = editing ? editing.email : String(data.get("email") ?? "").trim().toLowerCase();
     const mobile = String(data.get("mobile") ?? "").trim();
     const password = String(data.get("password") ?? "");
@@ -193,6 +270,7 @@ export default function StudentsManager() {
 
     const record = {
       name,
+      studentId,
       class: formClass,
       batchId: batch.id,
       batchLabel: batchLabelOf(batch),
@@ -373,14 +451,16 @@ export default function StudentsManager() {
                         >
                           <i className="ti ti-check" aria-hidden="true" /> Approve
                         </button>
-                        <button
-                          type="button"
-                          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                          aria-label={`Delete ${p.name}'s signup request`}
-                          onClick={() => setModal({ status: "confirmPending", pending: p })}
-                        >
-                          <i className="ti ti-trash" aria-hidden="true" />
-                        </button>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                            aria-label={`Delete ${p.name}'s signup request`}
+                            onClick={() => setModal({ status: "confirmPending", pending: p })}
+                          >
+                            <i className="ti ti-trash" aria-hidden="true" />
+                          </button>
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -395,7 +475,44 @@ export default function StudentsManager() {
       <section className={styles.panel} aria-labelledby="student-list-title">
         <div className={styles.panelHeader}>
           <h2 id="student-list-title" className={styles.panelTitle}>All Students</h2>
-          <span className="badge badge-default">{students.length}</span>
+          <span className="badge badge-default">{filteredStudents.length}</span>
+        </div>
+
+        {/* Search + filters */}
+        <div className={studentStyles.toolbar}>
+          <div className={studentStyles.searchWrap}>
+            <i className="ti ti-search" aria-hidden="true" />
+            <input
+              type="search"
+              className={studentStyles.searchInput}
+              placeholder="Search by name, email, ID or mobile"
+              aria-label="Search students"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <select
+            className={studentStyles.filterSelect}
+            aria-label="Filter by location"
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+          >
+            <option value="">All locations</option>
+            {locationOptions.map((l) => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+          </select>
+          <select
+            className={studentStyles.filterSelect}
+            aria-label="Filter by class"
+            value={filterClass}
+            onChange={(e) => setFilterClass(e.target.value)}
+          >
+            <option value="">All classes</option>
+            {classOptions.map((c) => (
+              <option key={c} value={c}>Class {c}</option>
+            ))}
+          </select>
         </div>
 
         {loadingList ? (
@@ -405,6 +522,13 @@ export default function StudentsManager() {
             <i className="ti ti-users" aria-hidden="true" />
             <p className={styles.emptyText}>
               No students yet — click “Add Student” to enroll the first one.
+            </p>
+          </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className={styles.empty}>
+            <i className="ti ti-search-off" aria-hidden="true" />
+            <p className={styles.emptyText}>
+              No students match your search or filters.
             </p>
           </div>
         ) : (
@@ -422,14 +546,32 @@ export default function StudentsManager() {
                 </tr>
               </thead>
               <tbody>
-                {students.map((s) => {
+                {pageStudents.map((s) => {
                   const visible = visiblePasswords.has(s.id);
                   return (
-                    <tr key={s.id}>
+                    <tr
+                      key={s.id}
+                      className={studentStyles.clickableRow}
+                      onClick={() => setModal({ status: "details", student: s })}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`View ${s.name}'s details`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setModal({ status: "details", student: s });
+                        }
+                      }}
+                    >
                       <td>
                         <span className={styles.nameCell}>
                           <span className={styles.avatar} aria-hidden="true">{initials(s.name)}</span>
-                          {s.name}
+                          <span className={studentStyles.nameStack}>
+                            {s.name}
+                            {s.studentId ? (
+                              <span className={studentStyles.studentId}>ID: {s.studentId}</span>
+                            ) : null}
+                          </span>
                         </span>
                       </td>
                       <td>
@@ -447,7 +589,10 @@ export default function StudentsManager() {
                             type="button"
                             className={styles.iconBtn}
                             aria-label={visible ? "Hide password" : "Show password"}
-                            onClick={() => togglePassword(s.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePassword(s.id);
+                            }}
                           >
                             <i className={`ti ${visible ? "ti-eye-off" : "ti-eye"}`} aria-hidden="true" />
                           </button>
@@ -459,18 +604,26 @@ export default function StudentsManager() {
                             type="button"
                             className={styles.iconBtn}
                             aria-label={`Edit ${s.name}`}
-                            onClick={() => openForm(s)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openForm(s);
+                            }}
                           >
                             <i className="ti ti-pencil" aria-hidden="true" />
                           </button>
-                          <button
-                            type="button"
-                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                            aria-label={`Delete ${s.name}`}
-                            onClick={() => setModal({ status: "confirm", student: s })}
-                          >
-                            <i className="ti ti-trash" aria-hidden="true" />
-                          </button>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                              aria-label={`Delete ${s.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModal({ status: "confirm", student: s });
+                              }}
+                            >
+                              <i className="ti ti-trash" aria-hidden="true" />
+                            </button>
+                          )}
                         </span>
                       </td>
                     </tr>
@@ -480,10 +633,65 @@ export default function StudentsManager() {
             </table>
           </div>
         )}
+
+        {/* Pagination */}
+        {!loadingList && filteredStudents.length > 0 && (
+          <div className={studentStyles.pagination}>
+            <div className={studentStyles.pageSize}>
+              <label htmlFor="page-size">Per page</label>
+              <select
+                id="page-size"
+                className={studentStyles.filterSelect}
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+              >
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+
+            <span className={studentStyles.pageInfo}>
+              {pageStart + 1}–{Math.min(pageStart + pageSize, filteredStudents.length)} of{" "}
+              {filteredStudents.length}
+            </span>
+
+            <div className={studentStyles.pageNav}>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                aria-label="Previous page"
+                disabled={currentPage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <i className="ti ti-chevron-left" aria-hidden="true" />
+              </button>
+              <span className={studentStyles.pageInfo}>
+                Page {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                aria-label="Next page"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                <i className="ti ti-chevron-right" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
+      {/* ---- Details (read-only) ---- */}
+      {modal.status === "details" && (
+        <StudentDetailsModal
+          student={modal.student}
+          onClose={() => setModal({ status: "closed" })}
+        />
+      )}
+
       {/* ---- Modal ---- */}
-      {modal.status !== "closed" && (
+      {modal.status !== "closed" && modal.status !== "details" && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true"
           aria-label="Student dialog">
           {modal.status === "form" ? (
@@ -507,11 +715,18 @@ export default function StudentsManager() {
                 className={studentStyles.formGrid}
                 onSubmit={(e) => handleSubmit(e, editing, pending)}
               >
-                <div className={`${styles.field} ${studentStyles.spanFull}`}>
+                <div className={styles.field}>
                   <label className={styles.label} htmlFor="student-name">Name</label>
                   <input className={styles.input} id="student-name" name="name" type="text"
                     placeholder="Student's full name" required autoComplete="off"
                     defaultValue={editing?.name ?? pending?.name} />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="student-id">Student ID</label>
+                  <input className={styles.input} id="student-id" name="studentId" type="text"
+                    placeholder="e.g. CB-1024" autoComplete="off"
+                    defaultValue={editing?.studentId ?? pending?.studentId} />
                 </div>
 
                 <div className={styles.field}>
@@ -565,7 +780,7 @@ export default function StudentsManager() {
                   <label className={styles.label} htmlFor="student-mobile">Mobile Number</label>
                   <input className={styles.input} id="student-mobile" name="mobile" type="tel"
                     placeholder="+880 1XXX-XXXXXX" required autoComplete="off"
-                    defaultValue={editing?.mobile} />
+                    defaultValue={editing?.mobile ?? pending?.mobile} />
                 </div>
 
                 <div className={styles.field}>
@@ -583,40 +798,40 @@ export default function StudentsManager() {
                   </div>
                 </div>
 
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="student-mothers-name">
-                    Mother&apos;s Name <OptionalTag />
-                  </label>
-                  <input className={styles.input} id="student-mothers-name" name="mothersName"
-                    type="text" placeholder="Mother's full name" autoComplete="off"
-                    defaultValue={editing?.mothersName} />
-                </div>
-
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="student-mothers-phone">
-                    Mother&apos;s Phone Number <OptionalTag />
-                  </label>
-                  <input className={styles.input} id="student-mothers-phone" name="mothersPhone"
-                    type="tel" placeholder="+880 1XXX-XXXXXX" autoComplete="off"
-                    defaultValue={editing?.mothersPhone} />
-                </div>
-
-                <div className={styles.field}>
+                <div className={`${styles.field} ${studentStyles.spanFull}`}>
                   <label className={styles.label} htmlFor="student-fathers-name">
                     Father&apos;s Name <OptionalTag />
                   </label>
                   <input className={styles.input} id="student-fathers-name" name="fathersName"
                     type="text" placeholder="Father's full name" autoComplete="off"
-                    defaultValue={editing?.fathersName} />
+                    defaultValue={editing?.fathersName ?? pending?.fathersName} />
                 </div>
 
-                <div className={styles.field}>
+                <div className={`${styles.field} ${studentStyles.spanFull}`}>
                   <label className={styles.label} htmlFor="student-fathers-phone">
                     Father&apos;s Phone Number <OptionalTag />
                   </label>
                   <input className={styles.input} id="student-fathers-phone" name="fathersPhone"
                     type="tel" placeholder="+880 1XXX-XXXXXX" autoComplete="off"
-                    defaultValue={editing?.fathersPhone} />
+                    defaultValue={editing?.fathersPhone ?? pending?.fathersPhone} />
+                </div>
+
+                <div className={`${styles.field} ${studentStyles.spanFull}`}>
+                  <label className={styles.label} htmlFor="student-mothers-name">
+                    Mother&apos;s Name <OptionalTag />
+                  </label>
+                  <input className={styles.input} id="student-mothers-name" name="mothersName"
+                    type="text" placeholder="Mother's full name" autoComplete="off"
+                    defaultValue={editing?.mothersName ?? pending?.mothersName} />
+                </div>
+
+                <div className={`${styles.field} ${studentStyles.spanFull}`}>
+                  <label className={styles.label} htmlFor="student-mothers-phone">
+                    Mother&apos;s Phone Number <OptionalTag />
+                  </label>
+                  <input className={styles.input} id="student-mothers-phone" name="mothersPhone"
+                    type="tel" placeholder="+880 1XXX-XXXXXX" autoComplete="off"
+                    defaultValue={editing?.mothersPhone ?? pending?.mothersPhone} />
                 </div>
 
                 <div className={`${styles.field} ${studentStyles.spanFull}`}>
@@ -625,7 +840,7 @@ export default function StudentsManager() {
                   </label>
                   <input className={styles.input} id="student-address" name="address" type="text"
                     placeholder="Street, city" autoComplete="off"
-                    defaultValue={editing?.address} />
+                    defaultValue={editing?.address ?? pending?.address} />
                 </div>
 
                 <div className={`${styles.field} ${studentStyles.spanFull}`}>
@@ -634,7 +849,7 @@ export default function StudentsManager() {
                   </label>
                   <input className={styles.input} id="student-school" name="school" type="text"
                     placeholder="Current school" autoComplete="off"
-                    defaultValue={editing?.school} />
+                    defaultValue={editing?.school ?? pending?.school} />
                 </div>
 
                 <button type="submit" className={`btn btn-primary ${studentStyles.spanFull}`}>

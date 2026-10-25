@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import Link from "next/link";
 import {
   addDoc,
   collection,
@@ -14,6 +16,12 @@ import {
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadString } from "firebase/storage";
 import { getFirebaseDb, getFirebaseStorage, isFirebaseConfigured } from "@/lib/firebase";
+import {
+  DEFAULT_ASSISTANT_PERMISSIONS,
+  subscribeAssistantPermissions,
+} from "@/lib/assistantPermissions";
+import type { PanelRole } from "@/lib/panelRole";
+import { computeDueEntries, currentMonthIndex } from "@/lib/dues";
 import styles from "./AssistantsManager.module.css";
 import paymentStyles from "./PaymentsManager.module.css";
 
@@ -22,6 +30,7 @@ type Payment = {
   studentId: string;
   uid: string;
   studentName: string;
+  studentCode: string;
   class: string;
   batchId: string;
   batchLabel: string;
@@ -36,9 +45,11 @@ type Payment = {
 type StudentOption = {
   id: string;
   name: string;
+  studentId: string;
   class: string;
   batchId: string;
   batchLabel: string;
+  createdAt: Timestamp | null;
 };
 
 type BatchOption = {
@@ -55,9 +66,11 @@ type ModalState =
   | { status: "success"; title: string; text: string }
   | { status: "error"; message: string }
   | { status: "confirm"; payment: Payment }
-  | { status: "receipt"; payment: Payment };
+  | { status: "receipt"; payment: Payment }
+  | { status: "details"; payment: Payment };
 
 const classOptions = ["IX", "X", "XI", "XII"];
+const locationOptions = ["Mirpur", "Gulshan", "Lalmatia"];
 const monthOptions = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -75,6 +88,114 @@ function initials(name: string) {
     .map((w) => w[0].toUpperCase())
     .slice(0, 2)
     .join("");
+}
+
+/** Escape user-supplied text before dropping it into the receipt window HTML. */
+function esc(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Print a payment as a narrow thermal/ATM-style receipt (80mm roll) rather than
+ * an A4 page. We render it in a throwaway popup so only the receipt prints —
+ * never the surrounding dashboard — and so the dark theme can't bleed in.
+ */
+function printReceipt(p: Payment) {
+  const recorded = p.createdAt
+    ? p.createdAt.toDate().toLocaleString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+  const printedAt = new Date().toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const line = (label: string, value: string) =>
+    `<div class="row"><span class="lbl">${esc(label)}</span><span class="val">${esc(value)}</span></div>`;
+
+  const rows = [
+    line("Student", p.studentName),
+    p.studentCode ? line("Student ID", p.studentCode) : "",
+    line("Class", `Class ${p.class}`),
+    line("Batch", p.batchLabel),
+    line("Month", p.month),
+    line("Status", p.status),
+    line("Recorded", recorded),
+  ].join("");
+
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Receipt — ${esc(p.studentName)}</title>
+<style>
+  @page { size: 80mm auto; margin: 4mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 72mm; }
+  body {
+    font-family: 'Courier New', ui-monospace, monospace;
+    color: #000; background: #fff;
+    font-size: 11px; line-height: 1.5;
+    padding: 2mm 0;
+  }
+  .center { text-align: center; }
+  .brand { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .sub { font-size: 10px; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+  .muted { font-size: 9px; color: #333; }
+  hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
+  .row .lbl { color: #333; white-space: nowrap; }
+  .row .val { font-weight: 700; text-align: right; }
+  .amount { text-align: center; margin: 8px 0; }
+  .amount .k { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #333; }
+  .amount .v { font-size: 18px; font-weight: 700; }
+  .foot { text-align: center; font-size: 9px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="center">
+    <div class="brand">CAIE-BIOLOGY</div>
+    <div class="sub">Payment Receipt</div>
+  </div>
+  <hr />
+  ${rows}
+  <hr />
+  <div class="amount">
+    <div class="k">Amount Paid</div>
+    <div class="v">&#2547; ${esc(p.amount.toLocaleString())}</div>
+  </div>
+  <hr />
+  <div class="foot">
+    <div>Printed ${esc(printedAt)}</div>
+    <div class="muted">Thank you.</div>
+  </div>
+  <script>
+    window.onload = function () {
+      window.focus();
+      window.print();
+    };
+    window.onafterprint = function () { window.close(); };
+  </script>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=380,height=640");
+  if (!win) return;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 function batchLabelOf(b: BatchOption) {
@@ -107,12 +228,16 @@ async function compressReceipt(file: File): Promise<string> {
   return dataUrl;
 }
 
-export default function PaymentsManager() {
+export default function PaymentsManager({ role = "admin" }: { role?: PanelRole }) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [batches, setBatches] = useState<BatchOption[]>([]);
   const [loadingList, setLoadingList] = useState(isFirebaseConfigured);
   const [modal, setModal] = useState<ModalState>({ status: "closed" });
+  // Admins always delete; assistants only when the admin has granted it.
+  const [canDelete, setCanDelete] = useState(
+    role === "admin" ? true : DEFAULT_ASSISTANT_PERMISSIONS.canDeletePayments
+  );
 
   // Form state — month/class/batch/search narrow down to one student
   const currentDate = new Date();
@@ -123,6 +248,87 @@ export default function PaymentsManager() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [receipt, setReceipt] = useState<{ name: string; dataUrl: string } | null>(null);
+
+  // Payment-history search, sidebar filters, and pagination
+  const [historySearch, setHistorySearch] = useState("");
+  const [filterLocations, setFilterLocations] = useState<string[]>([]);
+  const [filterClasses, setFilterClasses] = useState<string[]>([]);
+  const [filterBatches, setFilterBatches] = useState<string[]>([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(20);
+
+  // The batch name carries its location as one of its tokens (e.g.
+  // "LALMATIA-BATCH-2-TUESDAY … — LALMATIA"). Scan the label for the first
+  // token that matches a known location, case-insensitively, so filtering
+  // works regardless of how the name was capitalised or spaced.
+  const locationOf = (label: string) => {
+    const tokens = label.toLowerCase().split(/[\s—-]+/).filter(Boolean);
+    for (const t of tokens) {
+      const match = locationOptions.find((o) => o.toLowerCase() === t);
+      if (match) return match;
+    }
+    return "";
+  };
+  const batchLocationOf = (b: BatchOption) => locationOf(batchLabelOf(b));
+  const paymentLocationOf = (p: Payment) => locationOf(p.batchLabel);
+
+  // Location and class are single-select (radio-like): ticking one clears the
+  // previous pick; ticking the current one clears it.
+  const selectSingle = (
+    setter: Dispatch<SetStateAction<string[]>>,
+    value: string
+  ) => setter((prev) => (prev[0] === value ? [] : [value]));
+
+  // Batches shown in the sidebar are those matching the ticked locations/classes.
+  // They appear only once the admin/assistant has started narrowing down.
+  const showBatchList = filterLocations.length > 0 || filterClasses.length > 0;
+  const visibleBatches = showBatchList
+    ? batches.filter(
+        (b) =>
+          (filterLocations.length === 0 || filterLocations.includes(batchLocationOf(b))) &&
+          (filterClasses.length === 0 || filterClasses.includes(b.class))
+      )
+    : [];
+
+  // Ticked batches still visible under the current location/class picks.
+  const activeBatchIds = filterBatches.filter((id) =>
+    visibleBatches.some((b) => b.id === id)
+  );
+
+  const clearFilters = () => {
+    setFilterLocations([]);
+    setFilterClasses([]);
+    setFilterBatches([]);
+  };
+
+  const anyFilterActive =
+    filterLocations.length > 0 ||
+    filterClasses.length > 0 ||
+    filterBatches.length > 0;
+
+  const hq = historySearch.trim().toLowerCase();
+  const filteredPayments = payments.filter((p) => {
+    if (filterLocations.length && !filterLocations.includes(paymentLocationOf(p))) return false;
+    if (filterClasses.length && !filterClasses.includes(p.class)) return false;
+    if (activeBatchIds.length && !activeBatchIds.includes(p.batchId)) return false;
+    if (hq) {
+      const hay = [p.studentName, p.studentCode, p.month, p.batchLabel]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(hq)) return false;
+    }
+    return true;
+  });
+
+  const historyTotalPages = Math.max(1, Math.ceil(filteredPayments.length / historyPageSize));
+  const historyCurrentPage = Math.min(historyPage, historyTotalPages);
+  const historyStart = (historyCurrentPage - 1) * historyPageSize;
+  const pagePayments = filteredPayments.slice(historyStart, historyStart + historyPageSize);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historySearch, filterLocations, filterClasses, filterBatches, historyPageSize]);
 
   // Live payment history
   useEffect(() => {
@@ -155,7 +361,21 @@ export default function PaymentsManager() {
     });
   }, []);
 
+  // Assistants read the delete permission live so an admin toggle applies at once
+  useEffect(() => {
+    if (role === "admin" || !isFirebaseConfigured) return;
+    return subscribeAssistantPermissions((perms) =>
+      setCanDelete(perms.canDeletePayments)
+    );
+  }, [role]);
+
   const classBatches = batches.filter((b) => b.class === formClass);
+
+  // Outstanding-due count for the Due List button badge.
+  const dueCount = useMemo(
+    () => computeDueEntries(students, payments, currentMonthIndex()).length,
+    [students, payments]
+  );
 
   // Students are listed only after the admin starts narrowing down
   const hasCriteria = Boolean(formClass || formBatchId || search.trim());
@@ -227,6 +447,7 @@ export default function PaymentsManager() {
       await addDoc(collection(db, "Payments"), {
         studentId: selected.id,
         studentName: selected.name,
+        studentCode: selected.studentId ?? "",
         class: selected.class,
         batchId: selected.batchId,
         batchLabel: selected.batchLabel,
@@ -275,13 +496,25 @@ export default function PaymentsManager() {
             Record monthly fees and browse the full payment history.
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={openForm}
-          disabled={!isFirebaseConfigured}
-        >
-          <i className="ti ti-plus" aria-hidden="true" /> Record Payment
-        </button>
+        <div className={paymentStyles.headerActions}>
+          <Link
+            className={`btn ${paymentStyles.dueBtn}`}
+            href={`/${role}/payments/due`}
+            aria-disabled={!isFirebaseConfigured}
+          >
+            <i className="ti ti-alert-triangle" aria-hidden="true" /> Due List
+            {dueCount > 0 && (
+              <span className={paymentStyles.dueCount}>{dueCount}</span>
+            )}
+          </Link>
+          <button
+            className="btn btn-primary"
+            onClick={openForm}
+            disabled={!isFirebaseConfigured}
+          >
+            <i className="ti ti-plus" aria-hidden="true" /> Record Payment
+          </button>
+        </div>
       </header>
 
       {!isFirebaseConfigured && (
@@ -298,19 +531,128 @@ export default function PaymentsManager() {
       )}
 
       {/* ---- Payment history ---- */}
-      <section className={styles.panel} aria-labelledby="payment-history-title">
-        <div className={styles.panelHeader}>
-          <h2 id="payment-history-title" className={styles.panelTitle}>Payment History</h2>
-          <span className="badge badge-default">{payments.length}</span>
-        </div>
+      <div className={paymentStyles.layout}>
+        {/* Filter sidebar */}
+        <aside className={paymentStyles.filterSidebar} aria-label="Payment filters">
+          <div className={paymentStyles.filterHead}>
+            <h2 className={paymentStyles.filterHeading}>
+              <i className="ti ti-filter" aria-hidden="true" /> Filters
+            </h2>
+            {anyFilterActive && (
+              <button
+                type="button"
+                className={paymentStyles.clearBtn}
+                onClick={clearFilters}
+              >
+                Clear all
+              </button>
+            )}
+          </div>
 
-        {loadingList ? (
+          <div className={paymentStyles.filterGroup}>
+            <span className={paymentStyles.filterGroupTitle}>Location</span>
+            <ul className={paymentStyles.checkList}>
+              {locationOptions.map((l) => (
+                <li key={l}>
+                  <label className={paymentStyles.checkItem}>
+                    <input
+                      type="checkbox"
+                      checked={filterLocations.includes(l)}
+                      onChange={() => selectSingle(setFilterLocations, l)}
+                    />
+                    <span>{l}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={paymentStyles.filterGroup}>
+            <span className={paymentStyles.filterGroupTitle}>Class</span>
+            <ul className={paymentStyles.checkList}>
+              {classOptions.map((c) => (
+                <li key={c}>
+                  <label className={paymentStyles.checkItem}>
+                    <input
+                      type="checkbox"
+                      checked={filterClasses.includes(c)}
+                      onChange={() => selectSingle(setFilterClasses, c)}
+                    />
+                    <span>Class {c}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={paymentStyles.filterGroup}>
+            <span className={paymentStyles.filterGroupTitle}>Batch</span>
+            {!showBatchList ? (
+              <p className={paymentStyles.filterHint}>
+                Tick a location or class to list its batches.
+              </p>
+            ) : visibleBatches.length === 0 ? (
+              <p className={paymentStyles.filterHint}>
+                No batches match the selected location and class.
+              </p>
+            ) : (
+              <ul className={paymentStyles.checkList}>
+                {visibleBatches.map((b) => (
+                  <li key={b.id}>
+                    <label className={paymentStyles.checkItem}>
+                      <input
+                        type="checkbox"
+                        checked={filterBatches.includes(b.id)}
+                        onChange={() => selectSingle(setFilterBatches, b.id)}
+                      />
+                      <span>
+                        {batchLabelOf(b)}
+                        <br />
+                        <small className={paymentStyles.checkSub}>Class {b.class}</small>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+
+        <section className={styles.panel} aria-labelledby="payment-history-title">
+          <div className={styles.panelHeader}>
+            <h2 id="payment-history-title" className={styles.panelTitle}>Payment History</h2>
+            <span className="badge badge-default">{filteredPayments.length}</span>
+          </div>
+
+          {/* Search */}
+          <div className={paymentStyles.toolbar}>
+            <div className={paymentStyles.searchWrap}>
+              <i className="ti ti-search" aria-hidden="true" />
+              <input
+                type="search"
+                className={paymentStyles.searchInput}
+                placeholder="Search by student, ID, month or batch"
+                aria-label="Search payments"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {loadingList ? (
           <p className={styles.emptyText}>Loading payments…</p>
         ) : payments.length === 0 ? (
           <div className={styles.empty}>
             <i className="ti ti-credit-card" aria-hidden="true" />
             <p className={styles.emptyText}>
               No payments recorded yet — click “Record Payment” to log the first one.
+            </p>
+          </div>
+        ) : filteredPayments.length === 0 ? (
+          <div className={styles.empty}>
+            <i className="ti ti-search-off" aria-hidden="true" />
+            <p className={styles.emptyText}>
+              No payments match your search or filters.
             </p>
           </div>
         ) : (
@@ -329,8 +671,21 @@ export default function PaymentsManager() {
                 </tr>
               </thead>
               <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id}>
+                {pagePayments.map((p) => (
+                  <tr
+                    key={p.id}
+                    className={paymentStyles.clickableRow}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View ${p.studentName}'s ${p.month} payment details`}
+                    onClick={() => setModal({ status: "details", payment: p })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setModal({ status: "details", payment: p });
+                      }
+                    }}
+                  >
                     <td>
                       <span className={styles.nameCell}>
                         <span className={styles.avatar} aria-hidden="true">
@@ -360,7 +715,10 @@ export default function PaymentsManager() {
                           type="button"
                           className={styles.iconBtn}
                           aria-label={`View ${p.studentName}'s receipt`}
-                          onClick={() => setModal({ status: "receipt", payment: p })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setModal({ status: "receipt", payment: p });
+                          }}
                         >
                           <i className="ti ti-photo" aria-hidden="true" />
                         </button>
@@ -370,14 +728,21 @@ export default function PaymentsManager() {
                     </td>
                     <td>
                       <span className={styles.actions}>
-                        <button
-                          type="button"
-                          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                          aria-label={`Delete ${p.studentName}'s ${p.month} payment`}
-                          onClick={() => setModal({ status: "confirm", payment: p })}
-                        >
-                          <i className="ti ti-trash" aria-hidden="true" />
-                        </button>
+                        {canDelete ? (
+                          <button
+                            type="button"
+                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                            aria-label={`Delete ${p.studentName}'s ${p.month} payment`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModal({ status: "confirm", payment: p });
+                            }}
+                          >
+                            <i className="ti ti-trash" aria-hidden="true" />
+                          </button>
+                        ) : (
+                          "—"
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -386,7 +751,55 @@ export default function PaymentsManager() {
             </table>
           </div>
         )}
-      </section>
+
+        {/* Pagination */}
+        {!loadingList && filteredPayments.length > 0 && (
+          <div className={paymentStyles.pagination}>
+            <div className={paymentStyles.pageSize}>
+              <label htmlFor="history-page-size">Per page</label>
+              <select
+                id="history-page-size"
+                className={paymentStyles.filterSelect}
+                value={historyPageSize}
+                onChange={(e) => setHistoryPageSize(Number(e.target.value))}
+              >
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+
+            <span className={paymentStyles.pageInfo}>
+              {historyStart + 1}–{Math.min(historyStart + historyPageSize, filteredPayments.length)} of{" "}
+              {filteredPayments.length}
+            </span>
+
+            <div className={paymentStyles.pageNav}>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                aria-label="Previous page"
+                disabled={historyCurrentPage <= 1}
+                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+              >
+                <i className="ti ti-chevron-left" aria-hidden="true" />
+              </button>
+              <span className={paymentStyles.pageInfo}>
+                Page {historyCurrentPage} / {historyTotalPages}
+              </span>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                aria-label="Next page"
+                disabled={historyCurrentPage >= historyTotalPages}
+                onClick={() => setHistoryPage((p) => Math.min(historyTotalPages, p + 1))}
+              >
+                <i className="ti ti-chevron-right" aria-hidden="true" />
+              </button>
+            </div>
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* ---- Modal ---- */}
       {modal.status !== "closed" && (
@@ -602,6 +1015,88 @@ export default function PaymentsManager() {
               ) : (
                 <p className={styles.modalText}>No receipt attached.</p>
               )}
+            </div>
+          ) : modal.status === "details" ? (
+            <div className={`${styles.modal} ${styles.modalWide}`}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>Payment Details</h3>
+                <button type="button" className={styles.iconBtn} aria-label="Close dialog"
+                  onClick={() => setModal({ status: "closed" })}>
+                  <i className="ti ti-x" aria-hidden="true" />
+                </button>
+              </div>
+              <dl className={paymentStyles.detailList}>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Student</dt>
+                  <dd className={paymentStyles.detailValue}>{modal.payment.studentName}</dd>
+                </div>
+                {modal.payment.studentCode ? (
+                  <div className={paymentStyles.detailRow}>
+                    <dt className={paymentStyles.detailLabel}>Student ID</dt>
+                    <dd className={paymentStyles.detailValue}>{modal.payment.studentCode}</dd>
+                  </div>
+                ) : null}
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Class</dt>
+                  <dd className={paymentStyles.detailValue}>Class {modal.payment.class}</dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Batch</dt>
+                  <dd className={paymentStyles.detailValue}>{modal.payment.batchLabel}</dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Month</dt>
+                  <dd className={paymentStyles.detailValue}>{modal.payment.month}</dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Amount</dt>
+                  <dd className={paymentStyles.detailValue}>
+                    ৳ {modal.payment.amount.toLocaleString()}
+                  </dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Status</dt>
+                  <dd className={paymentStyles.detailValue}>
+                    <span className="badge badge-default">{modal.payment.status}</span>
+                  </dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Recorded</dt>
+                  <dd className={paymentStyles.detailValue}>
+                    {modal.payment.createdAt
+                      ? modal.payment.createdAt.toDate().toLocaleString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "—"}
+                  </dd>
+                </div>
+                <div className={paymentStyles.detailRow}>
+                  <dt className={paymentStyles.detailLabel}>Receipt</dt>
+                  <dd className={paymentStyles.detailValue}>
+                    {modal.payment.receiptUrl ? (
+                      <button type="button" className="btn btn-secondary"
+                        onClick={() => setModal({ status: "receipt", payment: modal.payment })}>
+                        <i className="ti ti-photo" aria-hidden="true" /> View receipt
+                      </button>
+                    ) : (
+                      "No receipt attached"
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => printReceipt(modal.payment)}
+                >
+                  <i className="ti ti-printer" aria-hidden="true" /> Print Receipt
+                </button>
+              </div>
             </div>
           ) : (
             <div className={styles.modal}>

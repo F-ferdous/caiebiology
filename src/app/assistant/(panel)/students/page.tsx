@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function AssistantStudentsPage() {
-  return <StudentsManager />;
+  return <StudentsManager role="assistant" />;
 }

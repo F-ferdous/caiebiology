@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ASSISTANT_EMAIL_DOMAIN, getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { adminSections } from "@/lib/adminNav";
+import InstallGuide from "../pwa/InstallGuide";
 import styles from "../admin/AdminDashboard.module.css";
 
 const assistantSections = adminSections.filter((s) => s.slug !== "assistants");
@@ -31,6 +32,8 @@ export default function AssistantDashboard() {
           </p>
         </div>
       </header>
+
+      <InstallGuide owner={{ role: "assistant", name: username || "assistant" }} />
 
       <section className={styles.panel} aria-labelledby="sections-title">
         <div className={styles.panelHeader}>

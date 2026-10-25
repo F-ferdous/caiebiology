@@ -25,6 +25,12 @@ export const adminSections: AdminSection[] = [
     description: "Organize student batches, schedules, and capacity.",
   },
   {
+    slug: "announcements",
+    label: "Announcements",
+    icon: "ti-speakerphone",
+    description: "Post notices to all students, a class, or a batch — with push notifications.",
+  },
+  {
     slug: "resources",
     label: "Resources",
     icon: "ti-books",

@@ -1,14 +1,52 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { setStudentSession } from "@/lib/studentAuth";
 import styles from "./AuthForm.module.css";
 
 type Mode = "login" | "signup";
+
+const classOptions = ["IX", "X", "XI", "XII"];
+
+type BatchOption = {
+  id: string;
+  class: string;
+  time: string;
+  location: string;
+};
+
+const batchLabelOf = (b: BatchOption) => `${b.time} — ${b.location}`;
+
+// Everything a signup captures — mirrors the admin "Add Student" form so the
+// pending record can be approved without re-keying anything.
+type SignupRecord = {
+  name: string;
+  class: string;
+  batchId: string;
+  batchLabel: string;
+  email: string;
+  mobile: string;
+  password: string;
+  fathersName: string;
+  fathersPhone: string;
+  mothersName: string;
+  mothersPhone: string;
+  address: string;
+  school: string;
+};
 
 const copy = {
   login: {
@@ -40,8 +78,23 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Signup enrollment fields — class drives the cascading batch dropdown.
+  const [batches, setBatches] = useState<BatchOption[]>([]);
+  const [formClass, setFormClass] = useState("");
+  const [formBatchId, setFormBatchId] = useState("");
   const router = useRouter();
   const c = copy[mode];
+
+  // Batches feed the signup batch picker, just like the admin form.
+  useEffect(() => {
+    if (mode !== "signup" || !isFirebaseConfigured) return;
+    const qy = query(collection(getFirebaseDb(), "Batches"), orderBy("createdAt", "desc"));
+    return onSnapshot(qy, (snap) => {
+      setBatches(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<BatchOption, "id">) })));
+    });
+  }, [mode]);
+
+  const classBatches = batches.filter((b) => b.class === formClass);
 
   const handleLogin = async (email: string, password: string) => {
     if (!isFirebaseConfigured) {
@@ -88,7 +141,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
   };
 
-  const handleSignup = async (name: string, email: string, password: string) => {
+  const handleSignup = async (record: SignupRecord) => {
     if (!isFirebaseConfigured) {
       setError("Signup is temporarily unavailable — please try again later.");
       return;
@@ -97,8 +150,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     try {
       const db = getFirebaseDb();
       const [studentSnap, pendingSnap] = await Promise.all([
-        getDocs(query(collection(db, "Students"), where("email", "==", email))),
-        getDocs(query(collection(db, "PendingStudents"), where("email", "==", email))),
+        getDocs(query(collection(db, "Students"), where("email", "==", record.email))),
+        getDocs(query(collection(db, "PendingStudents"), where("email", "==", record.email))),
       ]);
       if (!studentSnap.empty) {
         setError("An account with this email already exists — try signing in instead.");
@@ -111,11 +164,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         return;
       }
 
-      // No auth account yet — the student stays pending until a teacher approves
+      // No auth account yet — the student stays pending, with all their details,
+      // until a teacher approves and their record moves to "Students".
       await addDoc(collection(db, "PendingStudents"), {
-        name,
-        email,
-        password,
+        ...record,
         createdAt: serverTimestamp(),
       });
       setSubmitted(true);
@@ -157,7 +209,36 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       setError("Enter your full name.");
       return;
     }
-    void handleSignup(name, email, password);
+    const mobile = String(data.get("mobile") ?? "").trim();
+    if (!mobile) {
+      setError("Enter your mobile number.");
+      return;
+    }
+    if (!formClass) {
+      setError("Select your class.");
+      return;
+    }
+    const batch = batches.find((b) => b.id === formBatchId);
+    if (!batch) {
+      setError("Select your batch.");
+      return;
+    }
+
+    void handleSignup({
+      name,
+      class: formClass,
+      batchId: batch.id,
+      batchLabel: batchLabelOf(batch),
+      email,
+      mobile,
+      password,
+      fathersName: String(data.get("fathersName") ?? "").trim(),
+      fathersPhone: String(data.get("fathersPhone") ?? "").trim(),
+      mothersName: String(data.get("mothersName") ?? "").trim(),
+      mothersPhone: String(data.get("mothersPhone") ?? "").trim(),
+      address: String(data.get("address") ?? "").trim(),
+      school: String(data.get("school") ?? "").trim(),
+    });
   };
 
   return (
@@ -227,6 +308,66 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                         required
                       />
                     </div>
+
+                    <div className={styles.grid2}>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="mobile">Mobile Number</label>
+                        <input
+                          className={styles.input}
+                          id="mobile"
+                          name="mobile"
+                          type="tel"
+                          autoComplete="tel"
+                          placeholder="+880 1XXX-XXXXXX"
+                          required
+                        />
+                      </div>
+
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="class">Class</label>
+                        <select
+                          className={styles.input}
+                          id="class"
+                          name="class"
+                          required
+                          value={formClass}
+                          onChange={(e) => {
+                            setFormClass(e.target.value);
+                            setFormBatchId("");
+                          }}
+                        >
+                          <option value="" disabled>Select a class</option>
+                          {classOptions.map((cl) => (
+                            <option key={cl} value={cl}>{cl}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="batch">Batch</label>
+                      <select
+                        className={styles.input}
+                        id="batch"
+                        name="batch"
+                        required
+                        value={formBatchId}
+                        onChange={(e) => setFormBatchId(e.target.value)}
+                        disabled={!formClass}
+                      >
+                        <option value="" disabled>
+                          {formClass ? "Select a batch" : "Select a class first"}
+                        </option>
+                        {classBatches.map((b) => (
+                          <option key={b.id} value={b.id}>{batchLabelOf(b)}</option>
+                        ))}
+                      </select>
+                      {formClass && classBatches.length === 0 && (
+                        <p className={styles.roleNote}>
+                          No batches for Class {formClass} yet — please contact your teacher.
+                        </p>
+                      )}
+                    </div>
                   </>
                 )}
 
@@ -273,19 +414,71 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                 </div>
 
                 {mode === "signup" && (
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="confirmPassword">Confirm Password</label>
-                    <input
-                      className={styles.input}
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      placeholder="Re-enter your password"
-                      required
-                      minLength={8}
-                    />
-                  </div>
+                  <>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="confirmPassword">Confirm Password</label>
+                      <input
+                        className={styles.input}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="Re-enter your password"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+
+                    <div className={styles.grid2}>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="fathersName">
+                          Father&apos;s Name <span className={styles.optional}>(Optional)</span>
+                        </label>
+                        <input className={styles.input} id="fathersName" name="fathersName"
+                          type="text" autoComplete="off" placeholder="Father's full name" />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="fathersPhone">
+                          Father&apos;s Phone <span className={styles.optional}>(Optional)</span>
+                        </label>
+                        <input className={styles.input} id="fathersPhone" name="fathersPhone"
+                          type="tel" autoComplete="off" placeholder="+880 1XXX-XXXXXX" />
+                      </div>
+                    </div>
+
+                    <div className={styles.grid2}>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="mothersName">
+                          Mother&apos;s Name <span className={styles.optional}>(Optional)</span>
+                        </label>
+                        <input className={styles.input} id="mothersName" name="mothersName"
+                          type="text" autoComplete="off" placeholder="Mother's full name" />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="mothersPhone">
+                          Mother&apos;s Phone <span className={styles.optional}>(Optional)</span>
+                        </label>
+                        <input className={styles.input} id="mothersPhone" name="mothersPhone"
+                          type="tel" autoComplete="off" placeholder="+880 1XXX-XXXXXX" />
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="address">
+                        Address <span className={styles.optional}>(Optional)</span>
+                      </label>
+                      <input className={styles.input} id="address" name="address"
+                        type="text" autoComplete="off" placeholder="Street, city" />
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="school">
+                        School <span className={styles.optional}>(Optional)</span>
+                      </label>
+                      <input className={styles.input} id="school" name="school"
+                        type="text" autoComplete="off" placeholder="Current school" />
+                    </div>
+                  </>
                 )}
 
                 {mode === "login" ? (
@@ -325,6 +518,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               {c.switchPrompt}{" "}
               <Link href={c.switchHref} className={styles.switchLink}>{c.switchLabel}</Link>
             </p>
+            {mode === "login" && (
+              <p className={styles.switchLine}>
+                Are you a parent?{" "}
+                <Link href="/parent/login" className={styles.switchLink}>
+                  Sign in with your child&apos;s ID
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

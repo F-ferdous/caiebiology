@@ -12,14 +12,16 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { adminSections } from "@/lib/adminNav";
+import StudentDetailsModal, { type StudentDetails } from "./StudentDetailsModal";
+import InstallGuide from "../pwa/InstallGuide";
 import styles from "./AdminDashboard.module.css";
 
-type RecentStudent = {
-  id: string;
-  name: string;
-  class: string;
-  batchLabel: string;
-  createdAt: Timestamp | null;
+// Recent-enrollment rows carry the full record so the details modal can show
+// everything without a second fetch.
+type RecentStudent = StudentDetails & {
+  class?: string;
+  batchLabel?: string;
+  createdAt?: Timestamp | null;
 };
 
 function initials(name: string) {
@@ -30,7 +32,7 @@ function initials(name: string) {
     .join("");
 }
 
-function formatDate(ts: Timestamp | null) {
+function formatDate(ts?: Timestamp | null) {
   if (!ts) return "—";
   return ts.toDate().toLocaleDateString("en-US", {
     month: "short",
@@ -46,6 +48,7 @@ export default function AdminDashboard() {
   const [feesCollected, setFeesCollected] = useState(0);
   const [recentStudents, setRecentStudents] = useState<RecentStudent[]>([]);
   const [loading, setLoading] = useState(isFirebaseConfigured);
+  const [selectedStudent, setSelectedStudent] = useState<RecentStudent | null>(null);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -101,6 +104,8 @@ export default function AdminDashboard() {
         </Link>
       </header>
 
+      <InstallGuide owner={{ role: "admin", name: "admin" }} />
+
       {/* Stat cards */}
       <div className={styles.statGrid}>
         {stats.map((s) => (
@@ -146,7 +151,20 @@ export default function AdminDashboard() {
                   </tr>
                 ) : (
                   recentStudents.map((s) => (
-                    <tr key={s.id}>
+                    <tr
+                      key={s.id}
+                      className={styles.clickableRow}
+                      onClick={() => setSelectedStudent(s)}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`View ${s.name}'s details`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedStudent(s);
+                        }
+                      }}
+                    >
                       <td>
                         <span className={styles.studentCell}>
                           <span className={styles.tableAvatar} aria-hidden="true">
@@ -181,6 +199,13 @@ export default function AdminDashboard() {
           </div>
         </section>
       </div>
+
+      {selectedStudent && (
+        <StudentDetailsModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </div>
   );
 }

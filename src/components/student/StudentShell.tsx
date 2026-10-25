@@ -1,28 +1,27 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { clearStudentSession, getStudentSession } from "@/lib/studentAuth";
+import { disablePush } from "@/lib/push";
 import PanelShell, { type PanelNavItem } from "../admin/PanelShell";
 import { type StudentRecord } from "./studentData";
+import { StudentContext, useStudent } from "./studentContext";
+
+// Re-exported so existing imports (`import { useStudent } from "./StudentShell"`)
+// keep working now that the context lives in its own module.
+export { useStudent };
 
 const navItems: PanelNavItem[] = [
   { href: "/student", label: "Dashboard", icon: "ti-layout-dashboard" },
+  { href: "/student/notices", label: "Notices", icon: "ti-speakerphone" },
   { href: "/student/profile", label: "Profile", icon: "ti-user-circle" },
   { href: "/student/resources", label: "Resources", icon: "ti-books" },
   { href: "/student/tests", label: "Tests & Quizzes", icon: "ti-clipboard-check" },
   { href: "/student/payments", label: "Payment Info", icon: "ti-credit-card" },
 ];
-
-const StudentContext = createContext<StudentRecord | null>(null);
-
-export function useStudent(): StudentRecord {
-  const student = useContext(StudentContext);
-  if (!student) throw new Error("useStudent must be used within StudentShell");
-  return student;
-}
 
 export default function StudentShell({ children }: { children: React.ReactNode }) {
   const [student, setStudent] = useState<StudentRecord | null>(null);
@@ -57,6 +56,9 @@ export default function StudentShell({ children }: { children: React.ReactNode }
   }, [router]);
 
   const handleLogout = () => {
+    // Forget this device's push token so a shared device stops getting the
+    // student's notices after they sign out.
+    void disablePush();
     clearStudentSession();
     router.replace("/login");
   };

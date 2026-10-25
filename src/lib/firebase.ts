@@ -2,6 +2,11 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
+import {
+  getMessaging,
+  isSupported as isMessagingSupported,
+  type Messaging,
+} from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,6 +16,13 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+
+/** The public web-app config, used to initialise Firebase inside the
+ *  messaging service worker (passed as URL params at registration). */
+export const publicFirebaseConfig = firebaseConfig;
+
+/** Web Push VAPID key (Firebase console → Cloud Messaging → Web Push certs). */
+export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
@@ -32,6 +44,18 @@ export function getFirebaseAuth(): Auth {
 
 export function getFirebaseStorage(): FirebaseStorage {
   return getStorage(getFirebaseApp());
+}
+
+/** Firebase Cloud Messaging — resolves to null when the browser can't support
+ *  it (no window, no service worker / push, private mode, etc.). */
+export async function getFirebaseMessaging(): Promise<Messaging | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    if (!(await isMessagingSupported())) return null;
+    return getMessaging(getFirebaseApp());
+  } catch {
+    return null;
+  }
 }
 
 /**

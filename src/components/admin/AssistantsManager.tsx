@@ -26,6 +26,12 @@ import {
   getSecondaryAuth,
   isFirebaseConfigured,
 } from "@/lib/firebase";
+import {
+  AssistantPermissions,
+  DEFAULT_ASSISTANT_PERMISSIONS,
+  setAssistantPermissions,
+  subscribeAssistantPermissions,
+} from "@/lib/assistantPermissions";
 import styles from "./AssistantsManager.module.css";
 
 type Assistant = {
@@ -76,6 +82,10 @@ export default function AssistantsManager() {
   const [modal, setModal] = useState<ModalState>({ status: "closed" });
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [showFormPassword, setShowFormPassword] = useState(false);
+  const [permissions, setPermissions] = useState<AssistantPermissions>(
+    DEFAULT_ASSISTANT_PERMISSIONS
+  );
+  const [savingPermission, setSavingPermission] = useState<keyof AssistantPermissions | null>(null);
 
   // Live assistant list from Firestore
   useEffect(() => {
@@ -93,6 +103,26 @@ export default function AssistantsManager() {
     );
     return unsubscribe;
   }, []);
+
+  // Live permission flags for the toggles below
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    return subscribeAssistantPermissions(setPermissions);
+  }, []);
+
+  const togglePermission = async (key: keyof AssistantPermissions) => {
+    const next = !permissions[key];
+    // Optimistic — the snapshot listener reconciles, and reverts on failure
+    setPermissions((prev) => ({ ...prev, [key]: next }));
+    setSavingPermission(key);
+    try {
+      await setAssistantPermissions({ [key]: next });
+    } catch {
+      setPermissions((prev) => ({ ...prev, [key]: !next }));
+    } finally {
+      setSavingPermission(null);
+    }
+  };
 
   const togglePassword = (id: string) => {
     setVisiblePasswords((prev) => {
@@ -249,6 +279,53 @@ export default function AssistantsManager() {
           </div>
         </div>
       )}
+
+      {/* ---- Assistant permissions ---- */}
+      <section className={styles.panel} aria-labelledby="perms-title">
+        <div className={styles.panelHeader}>
+          <h2 id="perms-title" className={styles.panelTitle}>Permissions</h2>
+        </div>
+        <p className={styles.permsIntro}>
+          Control what assistants can do from their dashboard. Changes apply
+          immediately — no need for them to sign in again.
+        </p>
+
+        <ul className={styles.permsList}>
+          {([
+            {
+              key: "canDeleteStudents" as const,
+              label: "Delete students",
+              hint: "Remove student accounts and reject pending signup requests.",
+            },
+            {
+              key: "canDeletePayments" as const,
+              label: "Delete payment history",
+              hint: "Remove recorded payments and their receipts.",
+            },
+          ]).map(({ key, label, hint }) => {
+            const on = permissions[key];
+            return (
+              <li key={key} className={styles.permRow}>
+                <div className={styles.permText}>
+                  <span className={styles.permLabel}>{label}</span>
+                  <span className={styles.permHint}>{hint}</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={`Allow assistants to ${label.toLowerCase()}`}
+                  className={`${styles.toggle} ${on ? styles.toggleOn : ""}`}
+                  disabled={!isFirebaseConfigured || savingPermission === key}
+                  onClick={() => togglePermission(key)}
+                >
+                  <span className={styles.toggleThumb} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       {/* ---- Assistant list ---- */}
       <section className={styles.panel} aria-labelledby="list-title">

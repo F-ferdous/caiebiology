@@ -6,6 +6,7 @@ import Batches from "@/components/Batches";
 import AISection from "@/components/AISection";
 import ParentsCorner from "@/components/ParentsCorner";
 import International from "@/components/International";
+import AppCTA from "@/components/AppCTA";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 
@@ -21,6 +22,7 @@ export default function Home() {
         <AISection />
         <ParentsCorner />
         <International />
+        <AppCTA />
         <CTASection />
       </main>
       <Footer />

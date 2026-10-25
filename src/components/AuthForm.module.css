@@ -144,6 +144,25 @@
   gap: var(--space-2);
 }
 
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+@media (max-width: 480px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--theme-text-tertiary);
+}
+
 .labelRow {
   display: flex;
   align-items: center;

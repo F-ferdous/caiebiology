@@ -7,17 +7,23 @@ import { useStudent } from "./StudentShell";
 import adminStyles from "../admin/AdminDashboard.module.css";
 import styles from "./StudentPortal.module.css";
 
-/** Resources are authored in the (upcoming) admin Resources section — read tolerantly. */
+/** Mirrors the record written by the admin/assistant Resources manager, read
+ *  tolerantly so older docs (class-only, no `target`) still show up. */
 type ResourceRecord = {
   id: string;
   title?: string;
   name?: string;
-  class?: string;
   type?: string;
   description?: string;
   link?: string;
   url?: string;
+  target?: "all" | "class" | "batch" | "location";
+  class?: string | null;
+  batchId?: string | null;
+  location?: string | null;
 };
+
+type BatchRow = { id: string; location?: string };
 
 const typeIcons: Record<string, string> = {
   pdf: "ti-file-type-pdf",
@@ -26,9 +32,31 @@ const typeIcons: Record<string, string> = {
   link: "ti-link",
 };
 
+/** Does this resource reach the given student? Covers the four targets, and
+ *  treats legacy docs (no `target`) as class-scoped when a class is set. */
+function resourceMatchesStudent(
+  r: ResourceRecord,
+  student: { class?: string; batchId?: string; location?: string }
+): boolean {
+  const target = r.target ?? (r.class ? "class" : "all");
+  switch (target) {
+    case "all":
+      return true;
+    case "class":
+      return !!r.class && r.class === student.class;
+    case "batch":
+      return !!r.batchId && r.batchId === student.batchId;
+    case "location":
+      return !!r.location && r.location === student.location;
+    default:
+      return true;
+  }
+}
+
 export default function StudentResources() {
   const student = useStudent();
   const [resources, setResources] = useState<ResourceRecord[]>([]);
+  const [batches, setBatches] = useState<BatchRow[]>([]);
   const [loading, setLoading] = useState(isFirebaseConfigured);
 
   useEffect(() => {
@@ -45,8 +73,23 @@ export default function StudentResources() {
     );
   }, []);
 
-  // Resources without a class are shared with everyone
-  const visible = resources.filter((r) => !r.class || r.class === student.class);
+  // Batches let us resolve the student's location for location-targeted resources.
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    return onSnapshot(collection(getFirebaseDb(), "Batches"), (snap) => {
+      setBatches(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<BatchRow, "id">) })));
+    });
+  }, []);
+
+  const studentLocation = batches.find((b) => b.id === student.batchId)?.location ?? "";
+
+  const visible = resources.filter((r) =>
+    resourceMatchesStudent(r, {
+      class: student.class,
+      batchId: student.batchId,
+      location: studentLocation,
+    })
+  );
 
   return (
     <div className={adminStyles.dashboard}>

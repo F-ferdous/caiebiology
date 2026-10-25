@@ -4,6 +4,8 @@ import { Timestamp } from "firebase/firestore";
 export type StudentRecord = {
   id: string;
   uid: string;
+  /** Admin-assigned human-readable ID (used for parent login); may be empty. */
+  studentId?: string;
   name: string;
   class: string;
   batchId: string;

@@ -7,7 +7,7 @@ type Props = { params: Promise<{ section: string }> };
 
 // Sections with a dedicated page (e.g. /admin/assistants) are excluded —
 // their static route takes precedence over this placeholder.
-const builtSections = ["assistants", "batches", "students", "payments"];
+const builtSections = ["assistants", "batches", "students", "payments", "announcements", "resources"];
 
 export function generateStaticParams() {
   return adminSections

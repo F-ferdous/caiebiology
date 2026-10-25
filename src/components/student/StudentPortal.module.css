@@ -105,6 +105,16 @@ a.item:hover {
   transition: color var(--duration-slow) var(--ease-out);
 }
 
+.itemLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.itemLink:hover {
+  color: var(--red-500);
+  text-decoration: underline;
+}
+
 .itemMeta {
   margin-top: 2px;
   font-size: 11.5px;

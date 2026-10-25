@@ -5,6 +5,7 @@ import Link from "next/link";
 import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@/lib/firebase";
 import { useStudent } from "./StudentShell";
+import InstallGuide from "../pwa/InstallGuide";
 import {
   type BatchRecord,
   type PaymentRecord,
@@ -85,6 +86,16 @@ export default function StudentDashboard() {
         </div>
         <span className="badge badge-black">Class {student.class}</span>
       </header>
+
+      <InstallGuide
+        owner={{
+          role: "student",
+          studentId: student.id,
+          class: student.class,
+          batchId: student.batchId,
+          name: student.name,
+        }}
+      />
 
       {/* ---- Class & batch at a glance ---- */}
       <div className={adminStyles.statGrid}>

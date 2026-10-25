@@ -210,6 +210,15 @@
   --theme-bg-card:      var(--gray-800);
   --theme-bg-card-alt:  var(--gray-700);
 
+  /* Semantic tints — the light pastels are unreadable behind light-on-dark
+     text, so drop to translucent hue washes that sit on the dark surface. */
+  --color-success-bg:     rgba(46, 125, 50, 0.14);
+  --color-success-border: rgba(46, 125, 50, 0.35);
+  --color-warning-bg:     rgba(180, 130, 20, 0.14);
+  --color-warning-border: rgba(253, 230, 138, 0.28);
+  --color-danger-bg:      rgba(196, 31, 31, 0.14);
+  --color-danger-border:  rgba(196, 31, 31, 0.35);
+
   /* Text */
   --theme-text-primary:   var(--white);
   --theme-text-secondary: rgba(255, 255, 255, 0.65);
