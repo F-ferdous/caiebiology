@@ -40,6 +40,38 @@ const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+// Names that mark a higher-quality, more natural voice across platforms.
+const NATURAL_HINTS = /natural|neural|enhanced|premium|online/i;
+// Good-sounding voices by name (Apple, Google, Microsoft), most-liked first.
+const NICE_VOICES = [
+  "Ava", "Serena", "Sonia", "Libby", "Jenny", "Aria", "Samantha",
+  "Google UK English Female", "Google US English", "Daniel", "Zoe",
+];
+// Clearly robotic / novelty voices to avoid.
+const ROBOTIC = /eloquence|compact|zarvox|albert|bad news|cellos|bells|trinoids|whisper|wobble|boing|organ|bahh/i;
+
+/** Pick the most human-sounding English voice the device offers. CAIE is a
+ *  British board, so en-GB is preferred, then en-US, then any English. */
+function chooseVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const english = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
+  const pool = english.length ? english : voices;
+  if (!pool.length) return null;
+  const score = (v: SpeechSynthesisVoice) => {
+    let s = 0;
+    if (NATURAL_HINTS.test(v.name)) s += 50;
+    if (/google/i.test(v.name)) s += 30;
+    const nice = NICE_VOICES.findIndex((n) => v.name.includes(n));
+    if (nice !== -1) s += 24 - nice; // earlier in the list = better
+    if (v.lang === "en-GB") s += 15;
+    else if (v.lang === "en-US") s += 10;
+    else if (v.lang?.toLowerCase().startsWith("en")) s += 5;
+    if (ROBOTIC.test(v.name)) s -= 60;
+    if (v.localService === false) s += 8; // cloud voices are usually richer
+    return s;
+  };
+  return [...pool].sort((a, b) => score(b) - score(a))[0] ?? null;
+}
+
 export default function StudentTutor() {
   const student = useStudent();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -49,9 +81,24 @@ export default function StudentTutor() {
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typeTimer = useRef<number | null>(null);
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   const level = tutorLevelLabel(student.class);
   const busy = phase !== "idle";
+
+  // Load the best natural voice. getVoices() is often empty on first call and
+  // fills in asynchronously, so also listen for `voiceschanged`.
+  useEffect(() => {
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
+    if (!synth) return;
+    const pick = () => {
+      const chosen = chooseVoice(synth.getVoices());
+      if (chosen) voiceRef.current = chosen;
+    };
+    pick();
+    synth.addEventListener?.("voiceschanged", pick);
+    return () => synth.removeEventListener?.("voiceschanged", pick);
+  }, []);
 
   // Each visit opens a fresh conversation — past chats are still saved to
   // Firestore (for teacher review) but aren't replayed to the student here.
@@ -155,7 +202,15 @@ export default function StudentTutor() {
       }
       synth.cancel();
       const utter = new SpeechSynthesisUtterance(stripMarkdown(text));
-      utter.rate = 1;
+      if (voiceRef.current) {
+        utter.voice = voiceRef.current;
+        utter.lang = voiceRef.current.lang;
+      } else {
+        utter.lang = "en-GB";
+      }
+      // Slightly slower with a touch more pitch reads warmer and less robotic.
+      utter.rate = 0.95;
+      utter.pitch = 1.05;
       utter.onend = () => setSpeakingId((cur) => (cur === localId ? null : cur));
       utter.onerror = () => setSpeakingId((cur) => (cur === localId ? null : cur));
       setSpeakingId(localId);
