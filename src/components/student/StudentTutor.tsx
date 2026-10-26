@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { askTutor, tutorLevelLabel, type TutorMessage } from "@/lib/tutor";
 import { useStudent } from "./StudentShell";
 import adminStyles from "../admin/AdminDashboard.module.css";
@@ -293,7 +296,20 @@ export default function StudentTutor() {
               {m.role === "assistant" ? (
                 <div className={styles.msgCol}>
                   <div className={`${styles.msgBubble} ${styles.markdown}`}>
-                    <Markdown>{m.shown ?? m.content}</Markdown>
+                    <Markdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                      components={{
+                        // Wrap tables so a wide one scrolls instead of breaking layout.
+                        table: (props) => (
+                          <div className={styles.tableWrap}>
+                            <table {...props} />
+                          </div>
+                        ),
+                      }}
+                    >
+                      {m.shown ?? m.content}
+                    </Markdown>
                     {m.streaming && <span className={styles.caret} aria-hidden="true" />}
                   </div>
                   {!m.streaming && canSpeak && (

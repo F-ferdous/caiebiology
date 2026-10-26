@@ -7,14 +7,16 @@
   background: var(--theme-bg-card);
   border: 1px solid var(--theme-border);
   border-radius: var(--radius-xl);
-  overflow: hidden;
+  /* clip (not hidden): never becomes a scroll container, so the decorative
+     glow can't make the panel scroll sideways and hide answer content. */
+  overflow: clip;
   isolation: isolate;
 }
 
 /* ── Ambient animated glow behind the chat ─────────────────────────────── */
 .ambientGlow {
   position: absolute;
-  inset: -40% -20% auto -20%;
+  inset: -40% 0 auto 0;
   height: 360px;
   z-index: -1;
   background:
@@ -239,18 +241,25 @@
   display: flex;
   gap: 10px;
   max-width: 88%;
+  /* Let the row shrink so wide content (tables) scrolls inside its wrapper
+     instead of forcing the whole message past the container's edge. */
+  min-width: 0;
   animation: fadeInUp 0.35s ease-out both;
 }
 
-.msgUser { align-self: flex-end; flex-direction: row-reverse; }
-.msgAI { align-self: flex-start; }
+.msgUser { align-self: flex-end; flex-direction: row-reverse; max-width: 85%; }
+
+/* Answers read like a document (ChatGPT / Claude style): full width, no
+   bubble chrome — just the avatar and well-spaced flowing content. */
+.msgAI { align-self: stretch; max-width: 100%; }
 
 .msgCol {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
+  flex: 1;
 }
 
 @keyframes fadeInUp {
@@ -265,8 +274,8 @@
 .msgBubble {
   padding: 11px 15px;
   border-radius: var(--radius-lg);
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.93rem;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -278,11 +287,13 @@
   box-shadow: 0 4px 14px rgba(165, 18, 18, 0.22);
 }
 
+/* Assistant: no bubble — flowing document-style text (Markdown sets spacing). */
 .msgAI .msgBubble {
-  background: var(--theme-chip-bg);
+  padding: 2px 0 0;
+  background: transparent;
   color: var(--theme-text-primary);
-  border: 1px solid var(--theme-border);
-  border-bottom-left-radius: var(--radius-sm);
+  white-space: normal;
+  width: 100%;
 }
 
 /* Streaming caret */
@@ -302,35 +313,90 @@
   .caret { animation: none; }
 }
 
-/* Markdown-rendered answers — compact spacing for a chat bubble */
+/* Markdown-rendered answers — spacious, document-like typography */
+.markdown { font-size: 0.93rem; line-height: 1.7; }
 .markdown > :first-child { margin-top: 0; }
 .markdown > :last-child { margin-bottom: 0; }
-.markdown p { margin: 0 0 0.6em; }
-.markdown ul, .markdown ol { margin: 0.4em 0; padding-left: 1.3em; }
-.markdown li { margin: 0.2em 0; }
+
+.markdown p { margin: 0 0 0.9em; }
+
+.markdown ul, .markdown ol { margin: 0.6em 0 0.9em; padding-left: 1.4em; }
+.markdown li { margin: 0.35em 0; }
+.markdown li > ul, .markdown li > ol { margin: 0.35em 0; }
+
 .markdown h1, .markdown h2, .markdown h3, .markdown h4 {
-  font-size: 1rem;
   font-weight: 700;
-  margin: 0.7em 0 0.3em;
+  line-height: 1.3;
+  margin: 1.1em 0 0.5em;
   color: var(--theme-text-primary);
 }
+.markdown h1 { font-size: 1.25rem; }
+.markdown h2 { font-size: 1.12rem; }
+.markdown h3 { font-size: 1.02rem; }
+.markdown h4 { font-size: 0.95rem; }
+
 .markdown strong { font-weight: 700; }
+.markdown em { font-style: italic; }
+.markdown sub, .markdown sup { font-size: 0.74em; line-height: 0; }
+
+.markdown a {
+  color: var(--red-500);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown blockquote {
+  margin: 0.8em 0;
+  padding: 0.3em 0 0.3em 1em;
+  border-left: 3px solid var(--red-200);
+  color: var(--theme-text-secondary);
+}
+
+.markdown hr {
+  border: none;
+  border-top: 1px solid var(--theme-border);
+  margin: 1.2em 0;
+}
+
 .markdown code {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.86em;
   background: var(--theme-border-subtle);
-  padding: 0.1em 0.35em;
+  padding: 0.12em 0.4em;
   border-radius: var(--radius-sm);
 }
 .markdown pre {
   background: var(--theme-border-subtle);
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: var(--radius-md);
   overflow-x: auto;
-  margin: 0.5em 0;
+  margin: 0.8em 0;
+  line-height: 1.5;
 }
-.markdown pre code { background: none; padding: 0; }
-.markdown a { color: var(--red-500); text-decoration: underline; }
+.markdown pre code { background: none; padding: 0; font-size: 0.85em; }
+
+/* Tables — fit the width and wrap cell text; the wrapper scrolls if too wide */
+.tableWrap {
+  overflow-x: auto;
+  margin: 0.9em 0;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+}
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.markdown thead { background: var(--theme-chip-bg); }
+.markdown th, .markdown td {
+  padding: 8px 12px;
+  border: 1px solid var(--theme-border);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.55;
+}
+.markdown th { font-weight: 700; color: var(--theme-text-primary); }
+.markdown tbody tr:nth-child(even) { background: var(--theme-border-subtle); }
 
 /* ── Read-aloud button ─────────────────────────────────────────────────── */
 .speakBtn {
