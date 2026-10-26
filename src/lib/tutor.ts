@@ -4,6 +4,7 @@
 import { httpsCallable } from "firebase/functions";
 import {
   collection,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -61,6 +62,20 @@ export async function askTutor(
     history: history.map((m) => ({ role: m.role, content: m.content })),
   });
   return res.data;
+}
+
+/** One-time load of a student's saved tutor history, oldest first. Preferred
+ *  over the live subscription during an active chat, so the typewriter reveal
+ *  of a fresh answer isn't duplicated or clobbered by an incoming snapshot. */
+export async function loadTutorHistory(studentId: string): Promise<TutorMessage[]> {
+  const snap = await getDocs(
+    query(
+      collection(getFirebaseDb(), "TutorChats", studentId, "messages"),
+      orderBy("order", "asc"),
+      limit(TUTOR_HISTORY_LIMIT)
+    )
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TutorMessage, "id">) }));
 }
 
 /** Live-follow a student's own tutor history, oldest first. */
