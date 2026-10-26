@@ -2,13 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
-import { isFirebaseConfigured } from "@/lib/firebase";
-import {
-  askTutor,
-  loadTutorHistory,
-  tutorLevelLabel,
-  type TutorMessage,
-} from "@/lib/tutor";
+import { askTutor, tutorLevelLabel, type TutorMessage } from "@/lib/tutor";
 import { useStudent } from "./StudentShell";
 import adminStyles from "../admin/AdminDashboard.module.css";
 import styles from "./StudentTutor.module.css";
@@ -52,8 +46,6 @@ export default function StudentTutor() {
   const [draft, setDraft] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
-  // Without Firebase there's nothing to load, so start "loaded".
-  const [loaded, setLoaded] = useState(!isFirebaseConfigured);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typeTimer = useRef<number | null>(null);
@@ -61,21 +53,8 @@ export default function StudentTutor() {
   const level = tutorLevelLabel(student.class);
   const busy = phase !== "idle";
 
-  // Load saved history once (not a live subscription — see loadTutorHistory).
-  useEffect(() => {
-    if (!isFirebaseConfigured) return;
-    let active = true;
-    loadTutorHistory(student.id)
-      .then((msgs) => {
-        if (!active) return;
-        setMessages(msgs.map((m, i) => ({ ...m, localId: m.id ?? `h${i}`, shown: m.content })));
-        setLoaded(true);
-      })
-      .catch(() => active && setLoaded(true));
-    return () => {
-      active = false;
-    };
-  }, [student.id]);
+  // Each visit opens a fresh conversation — past chats are still saved to
+  // Firestore (for teacher review) but aren't replayed to the student here.
 
   // Keep the newest content in view as it streams in.
   useEffect(() => {
@@ -190,7 +169,7 @@ export default function StudentTutor() {
     void send(draft);
   };
 
-  const empty = loaded && messages.length === 0;
+  const empty = messages.length === 0;
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
 
   return (
@@ -221,8 +200,6 @@ export default function StudentTutor() {
         </div>
 
         <div className={styles.messages} ref={scrollRef}>
-          {!loaded && <p className={styles.hint}>Loading your conversation…</p>}
-
           {empty && (
             <div className={styles.welcome}>
               <div className={styles.welcomeOrb} aria-hidden="true">
