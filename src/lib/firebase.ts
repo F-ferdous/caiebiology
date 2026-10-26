@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFunctions, type Functions } from "firebase/functions";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import {
   getMessaging,
@@ -44,6 +45,12 @@ export function getFirebaseAuth(): Auth {
 
 export function getFirebaseStorage(): FirebaseStorage {
   return getStorage(getFirebaseApp());
+}
+
+/** Callable Cloud Functions (default region us-central1, matching the backend).
+ *  Used by the AI tutor to reach the `askTutor` function. */
+export function getFirebaseFunctions(): Functions {
+  return getFunctions(getFirebaseApp());
 }
 
 /** Firebase Cloud Messaging — resolves to null when the browser can't support

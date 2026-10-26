@@ -20,6 +20,7 @@ const navItems: PanelNavItem[] = [
   { href: "/student/notices", label: "Notices", icon: "ti-speakerphone" },
   { href: "/student/profile", label: "Profile", icon: "ti-user-circle" },
   { href: "/student/resources", label: "Resources", icon: "ti-books" },
+  { href: "/student/tutor", label: "AI Tutor", icon: "ti-sparkles" },
   { href: "/student/tests", label: "Tests & Quizzes", icon: "ti-clipboard-check" },
   { href: "/student/payments", label: "Payment Info", icon: "ti-credit-card" },
 ];
