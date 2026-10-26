@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import {
   askTutor,
@@ -127,7 +128,15 @@ export default function StudentTutor() {
                   <i className="ti ti-sparkles" />
                 </span>
               )}
-              <div className={styles.msgBubble}>{m.content}</div>
+              {/* Student questions are plain text; tutor answers come back as
+                  Markdown, so render those (bold, lists, headings). */}
+              {m.role === "assistant" ? (
+                <div className={`${styles.msgBubble} ${styles.markdown}`}>
+                  <Markdown>{m.content}</Markdown>
+                </div>
+              ) : (
+                <div className={styles.msgBubble}>{m.content}</div>
+              )}
             </div>
           ))}
 

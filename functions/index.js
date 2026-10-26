@@ -156,7 +156,10 @@ const GROQ_API_KEY = defineSecret("GROQ_API_KEY");
 // Swap these four lines (and the secret above) to change provider/model.
 const PROVIDER = {
   endpoint: "https://api.groq.com/openai/v1/chat/completions",
-  model: "llama-3.3-70b-versatile",
+  // Groq's current free-tier model (replaced the retired llama-3.3-70b-versatile).
+  // List what your key can use: curl -H "Authorization: Bearer $KEY" \
+  //   https://api.groq.com/openai/v1/models
+  model: "openai/gpt-oss-120b",
   // Caps the answer so a single reply can't devour the daily token budget.
   maxTokens: 500,
   temperature: 0.3,
